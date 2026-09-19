@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bomba Lógica &amp; Time Bomb — Atlas de Ameaças Cibernéticas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --bg-soft:#f7f6fc;
+    --ink:#1c1b2e;
+    --ink-dim:#5d5c74;
+    --purple:#6d28d9;
+    --purple-soft:#efe9fd;
+    --purple-line:#d9cdfb;
+    --blue:#1d4ed8;
+    --blue-soft:#e6edfe;
+    --blue-line:#c7d7fc;
+    --line:#e6e4f0;
+    --mono:'IBM Plex Mono', 'Courier New', monospace;
+    --head:'Space Grotesk', 'Segoe UI', sans-serif;
+    --sans:'Inter', -apple-system, 'Segoe UI', Arial, sans-serif;
+    --sidebar-w:296px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.65;
+  }
+
+  /* ================= SIDEBAR ================= */
+  aside{
+    position:fixed;
+    top:0; left:0; bottom:0;
+    width:var(--sidebar-w);
+    background:var(--bg);
+    border-right:1px solid var(--line);
+    padding:36px 0 24px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+  }
+  .brand{padding:0 28px 26px; border-bottom:1px solid var(--line); margin-bottom:6px;}
+  .brand .tag{font-family:var(--mono); font-size:11px; color:var(--ink-dim); letter-spacing:.03em; margin:0 0 10px;}
+  .brand h1{font-family:var(--head); font-size:19px; line-height:1.3; margin:0; font-weight:600;}
+  .brand h1 .lb{color:var(--purple);}
+  .brand h1 .tb{color:var(--blue);}
+
+  .navgroup{padding:22px 0 6px;}
+  .navgroup-label{
+    font-family:var(--head);
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+    padding:0 28px 12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .navgroup.shared .navgroup-label{
+    font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:.06em; color:var(--ink-dim);
+  }
+  .sq{width:9px; height:9px; border-radius:2px; display:inline-block; flex:none;}
+  .navgroup.lb .navgroup-label{color:var(--purple);}
+  .navgroup.lb .sq{background:var(--purple);}
+  .navgroup.tb .navgroup-label{color:var(--blue);}
+  .navgroup.tb .sq{background:var(--blue);}
+
+  nav.links{display:flex; flex-direction:column;}
+  nav.links a{
+    font-size:15.5px;
+    color:var(--ink-dim);
+    text-decoration:none;
+    padding:10px 28px 10px 25px;
+    border-left:3px solid transparent;
+  }
+  nav.links a:hover{color:var(--ink); background:var(--bg-soft);}
+  .navgroup.lb nav.links a.active{color:var(--purple); font-weight:600; border-left-color:var(--purple); background:var(--purple-soft);}
+  .navgroup.tb nav.links a.active{color:var(--blue); font-weight:600; border-left-color:var(--blue); background:var(--blue-soft);}
+  .navgroup.shared nav.links a.active{color:var(--ink); border-left-color:var(--ink-dim); background:var(--bg-soft);}
+
+  .sidebar-foot{margin-top:auto; padding:20px 28px 0; border-top:1px solid var(--line);}
+  .sidebar-foot a{font-family:var(--mono); font-size:12px; color:var(--ink-dim); text-decoration:none;}
+  .sidebar-foot a:hover{color:var(--ink);}
+
+  /* ================= MAIN ================= */
+  main{margin-left:var(--sidebar-w);}
+
+  section{
+    min-height:100vh;
+    display:grid;
+    grid-template-columns:1.05fr 0.95fr;
+    align-items:center;
+    gap:56px;
+    padding:72px 64px;
+    border-bottom:1px solid var(--line);
+  }
+  section.single{grid-template-columns:1fr; max-width:980px;}
+  .col-text{max-width:620px;}
+  .col-art{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:100%;
+  }
+  .col-art svg{width:100%; max-width:360px; height:auto;}
+
+  .kicker{font-family:var(--mono); font-size:14.5px; margin:0 0 16px;}
+  .kicker.lb{color:var(--purple);}
+  .kicker.tb{color:var(--blue);}
+  .kicker.shared{color:var(--ink-dim);}
+
+  h2{font-family:var(--head); font-size:42px; line-height:1.15; font-weight:600; letter-spacing:-0.01em; margin:0 0 22px; color:var(--ink);}
+  h3{font-family:var(--head); font-size:21px; font-weight:600; color:var(--ink); margin:32px 0 12px;}
+  p{color:var(--ink-dim); font-size:18px; margin:0 0 16px;}
+  strong{color:var(--ink); font-weight:600;}
+  em{color:var(--ink);}
+
+  .hero h2{font-size:52px; max-width:13ch;}
+  .hero p.lead{font-size:20px;}
+
+  .case{background:var(--bg-soft); border:1px solid var(--line); border-left:3px solid var(--purple); padding:24px 26px; margin-top:20px;}
+  section#tb-caso .case{border-left-color:var(--blue);}
+  .case .meta{font-family:var(--mono); font-size:13px; margin-bottom:9px;}
+  .case h4{font-family:var(--head); margin:0 0 11px; font-size:19px; color:var(--ink);}
+  .case p{margin:0; font-size:17px;}
+
+  ul.defense{list-style:none; margin:20px 0 0; padding:0;}
+  ul.defense li{font-size:17px; color:var(--ink-dim); padding:13px 0 13px 24px; border-top:1px solid var(--line); position:relative;}
+  ul.defense li:first-child{border-top:none;}
+  ul.defense li::before{content:"→"; position:absolute; left:0; top:12px; color:var(--purple); font-weight:600;}
+  section#tb-defesa ul.defense li::before{color:var(--blue);}
+
+  table{width:100%; border-collapse:collapse; margin-top:22px; font-size:15.5px;}
+  th,td{text-align:left; padding:16px 15px; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{font-family:var(--mono); font-size:12.5px; color:var(--ink-dim); font-weight:400;}
+  th:first-child{width:20%;}
+  td:first-child{color:var(--ink); font-weight:600;}
+  td.lb-col{color:var(--ink-dim); background:var(--purple-soft); border-left:2px solid var(--purple);}
+  td.tb-col{color:var(--ink-dim); background:var(--blue-soft); border-left:2px solid var(--blue);}
+  th.lb-col{color:var(--purple); background:var(--purple-soft); border-left:2px solid var(--purple);}
+  th.tb-col{color:var(--blue); background:var(--blue-soft); border-left:2px solid var(--blue);}
+
+  .flow{
+    font-family:var(--mono); font-size:16px;
+    background:linear-gradient(90deg, var(--purple-soft), var(--blue-soft));
+    border:1px solid var(--line); padding:22px 24px; color:var(--ink); margin-top:8px;
+  }
+  ol.diffuse{margin:24px 0 0; padding-left:20px;}
+  ol.diffuse li{font-size:17px; color:var(--ink-dim); margin-bottom:13px;}
+
+  .challenge{background:var(--bg-soft); border:1px solid var(--line); padding:30px; margin-top:18px; border-radius:4px;}
+  .challenge p{margin-bottom:0;}
+  details{margin-top:16px;}
+  summary{font-family:var(--mono); font-size:14.5px; color:var(--purple); cursor:pointer;}
+  details p{margin-top:12px;}
+
+  footer.section-refs ol{padding-left:20px; margin:0;}
+  footer.section-refs li{font-size:15.5px; color:var(--ink-dim); margin-bottom:11px;}
+  footer.section-refs a{color:var(--ink-dim); text-decoration:underline; text-underline-offset:2px;}
+
+  @media (max-width:980px){
+    section{grid-template-columns:1fr;}
+    .col-art{order:-1; max-height:220px;}
+    .col-art svg{max-width:220px;}
+  }
+  @media (max-width:900px){
+    aside{position:static; width:100%; height:auto; border-right:none; border-bottom:1px solid var(--line);}
+    main{margin-left:0;}
+    section{padding:56px 28px;}
+    h2{font-size:28px;} .hero h2{font-size:32px;}
+  }
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="brand">
+    <p class="tag">Atlas de Ameaças Cibernéticas — Dupla 07</p>
+    <h1><span class="lb">Bomba Lógica</span> &amp; <span class="tb">Time Bomb</span></h1>
+  </div>
+
+  <div class="navgroup shared">
+    <p class="navgroup-label"><span class="sq" style="background:var(--ink-dim);"></span>GERAL</p>
+    <nav class="links"><a href="#inicio" data-section="inicio">Início &amp; Objetivo</a></nav>
+  </div>
+
+  <div class="navgroup lb">
+    <p class="navgroup-label"><span class="sq"></span>Bomba Lógica</p>
+    <nav class="links">
+      <a href="#lb-conceito" data-section="lb-conceito">Conceito &amp; Histórico</a>
+      <a href="#lb-funcionamento" data-section="lb-funcionamento">Funcionamento</a>
+      <a href="#lb-caso" data-section="lb-caso">Caso Real</a>
+      <a href="#lb-defesa" data-section="lb-defesa">Defesa</a>
+    </nav>
+  </div>
+
+  <div class="navgroup tb">
+    <p class="navgroup-label"><span class="sq"></span>Time Bomb</p>
+    <nav class="links">
+      <a href="#tb-conceito" data-section="tb-conceito">Conceito &amp; Histórico</a>
+      <a href="#tb-funcionamento" data-section="tb-funcionamento">Funcionamento</a>
+      <a href="#tb-caso" data-section="tb-caso">Caso Real</a>
+      <a href="#tb-defesa" data-section="tb-defesa">Defesa</a>
+    </nav>
+  </div>
+
+  <div class="navgroup shared">
+    <p class="navgroup-label"><span class="sq" style="background:var(--ink-dim);"></span>SÍNTESE</p>
+    <nav class="links">
+      <a href="#comparacao" data-section="comparacao">Comparação Direta</a>
+      <a href="#neutralizacao" data-section="neutralizacao">Análise Visual &amp; Neutralização</a>
+      <a href="#desafio" data-section="desafio">Conclusão &amp; Desafio</a>
+      <a href="#referencias" data-section="referencias">Referências</a>
+    </nav>
+  </div>
+
+  <div class="sidebar-foot"><a href="../index.html">&larr; Voltar ao índice do Atlas</a></div>
+</aside>
+
+<main>
+
+  <section id="inicio" class="hero">
+    <div class="col-text">
+      <p class="kicker shared">Contextualização e Objetivo · 2 min</p>
+      <h2>Duas formas de esperar antes de atacar.</h2>
+      <p class="lead">Apresentação do programa interno de conscientização e resposta a incidentes da TechSecure S.A. Nosso objetivo é explicar e diferenciar ameaças baseadas em gatilhos condicionais e temporais, demonstrando seu funcionamento técnico, impactos e formas de mitigação.</p>
+      <p><strong>Em uma frase:</strong> uma análise profunda sobre como códigos ocultos utilizam lógica de estado e tempo para disparar cargas destrutivas — e como os analistas de segurança podem neutralizá-los.</p>
+    </div>
+    <div class="col-art">
+      <svg viewBox="0 0 320 320" fill="none">
+        <circle cx="115" cy="160" r="86" stroke="#6d28d9" stroke-width="1.6"/>
+        <circle cx="215" cy="160" r="86" stroke="#1d4ed8" stroke-width="1.6"/>
+        <path d="M115 74 V246" stroke="#6d28d9" stroke-width="1.2" stroke-dasharray="3 5" opacity=".4"/>
+        <path d="M215 74 V246" stroke="#1d4ed8" stroke-width="1.2" stroke-dasharray="3 5" opacity=".4"/>
+        <rect x="140" y="140" width="40" height="40" transform="rotate(45 160 160)" fill="#fff" stroke="#1c1b2e" stroke-width="1.6"/>
+        <circle cx="115" cy="160" r="4" fill="#6d28d9"/>
+        <circle cx="215" cy="160" r="4" fill="#1d4ed8"/>
+      </svg>
+    </div>
+  </section>
+
+  <section id="lb-conceito">
+    <div class="col-text">
+      <p class="kicker lb">Bomba Lógica · Conceito e Histórico · 5 min</p>
+      <h2>Bomba Lógica <span style="color:var(--ink-dim); font-weight:400; font-size:23px;">(Logic Bomb / Slag Code)</span></h2>
+      <p><strong>Definição oficial:</strong> instrução ou código inserido intencionalmente em um software para disparar uma função maliciosa quando condições lógicas específicas forem atendidas.</p>
+      <h3>Histórico e evolução</h3>
+      <p>Surgiu no contexto de ameaças internas (<em>insider threats</em>). Historicamente utilizada por colaboradores ou administradores insatisfeitos com privilégios de acesso. Diferencia-se de vírus e worms por não possuir capacidade de autorreplicação.</p>
+      <h3>Diferencial técnico</h3>
+      <p>Não necessita de backdoor ativa nem de replicação; permanece oculta em código ou scripts legítimos, aguardando uma mudança de estado.</p>
+    </div>
+    <div class="col-art">
+      <img src="assets/glitch-crash.svg" alt="Ilustração animada de um computador travando (glitch) enquanto o gatilho da bomba lógica é avaliado" style="width:100%; max-width:320px; height:auto;">
+    </div>
+  </section>
+
+  <section id="lb-funcionamento">
+    <div class="col-text">
+      <p class="kicker lb">Bomba Lógica · Funcionamento, Caso e Defesa · 5 min</p>
+      <h2>Como ela executa</h2>
+      <h3>Mecanismo de execução</h3>
+      <p>Verificação contínua ou condicional de variáveis de estado do sistema operacional — por exemplo, a remoção do nome do funcionário da base do RH, alteração de um registro, ou ausência de sinal do tipo <em>Dead Man's Switch</em>.</p>
+      <h3>Impacto no sistema</h3>
+      <p>Executa o payload — destruição de dados via sobrescrita ou corrupção de tabelas — com os privilégios da conta que rodou o processo.</p>
+    </div>
+    <div class="col-art">
+      <svg viewBox="0 0 320 340" fill="none">
+        <rect x="90" y="30" width="140" height="46" rx="6" stroke="#6d28d9" stroke-width="1.6"/>
+        <text x="160" y="58" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#6d28d9">condição = estado</text>
+        <path d="M160 76 V110" stroke="#6d28d9" stroke-width="1.6"/>
+        <path d="M160 150 L200 180 L160 210 L120 180 Z" stroke="#6d28d9" stroke-width="1.6"/>
+        <text x="160" y="184" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#6d28d9">?</text>
+        <path d="M160 210 V244" stroke="#6d28d9" stroke-width="1.6"/>
+        <rect x="80" y="244" width="160" height="50" rx="6" fill="#efe9fd" stroke="#6d28d9" stroke-width="1.6"/>
+        <text x="160" y="274" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#6d28d9">payload destrutivo</text>
+      </svg>
+    </div>
+  </section>
+
+  <section id="lb-caso">
+    <div class="col-text">
+      <p class="kicker lb">Bomba Lógica · Estudo de Caso</p>
+      <h2>Caso real</h2>
+      <div class="case">
+        <p class="meta" style="color:var(--purple);">UBS PaineWebber — 2002</p>
+        <h4>Roger Duronio</h4>
+        <p>Administrador de sistemas insatisfeito com o bônus recebido implantou um código malicioso em cerca de 1.000 computadores da empresa. Disparado após sua demissão, o código apagou arquivos e causou prejuízos superiores a US$ 3 milhões.</p>
+      </div>
+    </div>
+    <div class="col-art">
+      <svg viewBox="0 0 320 320" fill="none">
+        <rect x="95" y="60" width="130" height="34" rx="4" stroke="#6d28d9" stroke-width="1.6"/>
+        <rect x="95" y="102" width="130" height="34" rx="4" stroke="#6d28d9" stroke-width="1.6"/>
+        <rect x="95" y="144" width="130" height="34" rx="4" stroke="#6d28d9" stroke-width="1.6"/>
+        <circle cx="110" cy="77" r="3" fill="#6d28d9"/><circle cx="122" cy="77" r="3" fill="#6d28d9"/>
+        <circle cx="110" cy="119" r="3" fill="#6d28d9"/><circle cx="122" cy="119" r="3" fill="#6d28d9"/>
+        <circle cx="110" cy="161" r="3" fill="#6d28d9"/><circle cx="122" cy="161" r="3" fill="#6d28d9"/>
+        <path d="M160 200 L185 245 H135 Z" stroke="#6d28d9" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M160 212 V228" stroke="#6d28d9" stroke-width="1.8"/>
+        <circle cx="160" cy="236" r="1.6" fill="#6d28d9"/>
+      </svg>
+    </div>
+  </section>
+
+  <section id="lb-defesa">
+    <div class="col-text">
+      <p class="kicker lb">Bomba Lógica · Estratégias de Defesa</p>
+      <h2>Como se proteger</h2>
+      <ul class="defense">
+        <li>Aplicação rigorosa do Princípio do Menor Privilégio (<em>Least Privilege</em>).</li>
+        <li>Monitoramento de integridade de arquivos em binários e scripts, com ferramentas como Tripwire.</li>
+        <li>Criação de <em>baselines</em> de processos conhecidos e auditoria contínua de acessos privilegiados.</li>
+      </ul>
+    </div>
+    <div class="col-art">
+      <svg viewBox="0 0 320 320" fill="none">
+        <path d="M160 50 L235 80 V150 C235 205 200 240 160 260 C120 240 85 205 85 150 V80 Z" stroke="#6d28d9" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M128 155 L152 180 L196 128" stroke="#6d28d9" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </section>
+
+  <section id="tb-conceito">
+    <div class="col-text">
+      <p class="kicker tb">Time Bomb · Conceito e Histórico · 5 min</p>
+      <h2>Time Bomb <span style="color:var(--ink-dim); font-weight:400; font-size:23px;">(Bomba Relógio)</span></h2>
+      <p><strong>Definição oficial:</strong> subcategoria de bomba lógica cujo gatilho é estritamente baseado no fator tempo.</p>
+      <h3>Histórico e evolução</h3>
+      <p>Evoluiu de antigos vírus que aguardavam datas específicas — como o WM/Theatre.A, programado para o dia 1º do mês — até rotinas agendadas em scripts de administração de rede.</p>
+      <h3>Diferencial técnico</h3>
+      <p>Utiliza o relógio do sistema (<em>System Clock</em>), contadores de tempo decorrido ou utilitários de agendamento de tarefas para disparar o payload.</p>
+    </div>
+    <div class="col-art">
+      <svg viewBox="0 0 320 320" fill="none">
+        <circle cx="160" cy="160" r="96" stroke="#1d4ed8" stroke-width="1.8"/>
+        <circle cx="160" cy="160" r="3.5" fill="#1d4ed8"/>
+        <path d="M160 160 L160 96" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M160 160 L206 186" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M160 66 V78" stroke="#1d4ed8" stroke-width="1.6"/>
+        <path d="M160 242 V254" stroke="#1d4ed8" stroke-width="1.6"/>
+        <path d="M254 160 H242" stroke="#1d4ed8" stroke-width="1.6"/>
+        <path d="M78 160 H66" stroke="#1d4ed8" stroke-width="1.6"/>
+        <circle cx="160" cy="66" r="4" fill="#e0edff" stroke="#1d4ed8" stroke-width="1.6"/>
+      </svg>
+    </div>
+  </section>
+
+  <section id="tb-funcionamento">
+    <div class="col-text">
+      <p class="kicker tb">Time Bomb · Funcionamento, Caso e Defesa · 5 min</p>
+      <h2>Como ela executa</h2>
+      <h3>Mecanismo de execução</h3>
+      <p>Avaliação condicional de data/hora fixa, contagem regressiva de segundos, ou agendamento via Cron (Linux) / Task Scheduler (Windows).</p>
+      <h3>Impacto no sistema</h3>
+      <p>Ativação programada em momento de baixa vigilância — finais de semana ou madrugadas — para maximizar o impacto antes do início da resposta a incidentes.</p>
+    </div>
+    <div class="col-art">
+      <svg viewBox="0 0 320 320" fill="none">
+        <rect x="70" y="70" width="180" height="170" rx="8" stroke="#1d4ed8" stroke-width="1.8"/>
+        <path d="M70 116 H250" stroke="#1d4ed8" stroke-width="1.8"/>
+        <path d="M108 60 V82" stroke="#1d4ed8" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M212 60 V82" stroke="#1d4ed8" stroke-width="1.8" stroke-linecap="round"/>
+        <g stroke="#1d4ed8" stroke-width="1.2" opacity=".55">
+          <path d="M96 140 H124"/><path d="M144 140 H172"/><path d="M192 140 H220"/>
+          <path d="M96 166 H124"/><path d="M144 166 H172"/><path d="M192 166 H220"/>
+          <path d="M96 192 H124"/><path d="M144 192 H172"/>
+        </g>
+        <circle cx="206" cy="192" r="18" fill="#e6edfe" stroke="#1d4ed8" stroke-width="1.8"/>
+      </svg>
+    </div>
+  </section>
+
+  <section id="tb-caso">
+    <div class="col-text">
+      <p class="kicker tb">Time Bomb · Estudo de Caso</p>
+      <h2>Caso real</h2>
+      <div class="case">
+        <p class="meta" style="color:var(--blue);">Fannie Mae — 2008</p>
+        <h4>Rajendrasinh Makwana</h4>
+        <p>Programador terceirizado, demitido em 24/10/2008, transmitiu um script malicioso configurado para executar em 31/01/2009. O código visava se propagar por cerca de 5.000 servidores e apagar todos os dados financeiros e operacionais — mas foi descoberto a tempo.</p>
+      </div>
+    </div>
+    <div class="col-art">
+      <svg viewBox="0 0 320 320" fill="none">
+        <rect x="95" y="60" width="130" height="34" rx="4" stroke="#1d4ed8" stroke-width="1.6"/>
+        <rect x="95" y="102" width="130" height="34" rx="4" stroke="#1d4ed8" stroke-width="1.6"/>
+        <rect x="95" y="144" width="130" height="34" rx="4" stroke="#1d4ed8" stroke-width="1.6"/>
+        <circle cx="110" cy="77" r="3" fill="#1d4ed8"/><circle cx="122" cy="77" r="3" fill="#1d4ed8"/>
+        <circle cx="110" cy="119" r="3" fill="#1d4ed8"/><circle cx="122" cy="119" r="3" fill="#1d4ed8"/>
+        <circle cx="110" cy="161" r="3" fill="#1d4ed8"/><circle cx="122" cy="161" r="3" fill="#1d4ed8"/>
+        <circle cx="182" cy="225" r="30" stroke="#1d4ed8" stroke-width="1.8"/>
+        <path d="M182 225 V206" stroke="#1d4ed8" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M182 225 L196 232" stroke="#1d4ed8" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </section>
+
+  <section id="tb-defesa">
+    <div class="col-text">
+      <p class="kicker tb">Time Bomb · Estratégias de Defesa</p>
+      <h2>Como se proteger</h2>
+      <ul class="defense">
+        <li>Auditoria frequente de agendadores de tarefas (Cron jobs e Task Scheduler).</li>
+        <li>Armazenamento de backups isolados (<em>off-site</em>/offline), imunes ao relógio da rede.</li>
+        <li>Testes de avanço/recuo de relógio em ambiente seguro de laboratório, para revelar gatilhos ocultos.</li>
+      </ul>
+    </div>
+    <div class="col-art">
+      <svg viewBox="0 0 320 320" fill="none">
+        <path d="M160 50 L235 80 V150 C235 205 200 240 160 260 C120 240 85 205 85 150 V80 Z" stroke="#1d4ed8" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="160" cy="158" r="30" stroke="#1d4ed8" stroke-width="1.8"/>
+        <path d="M160 158 V138" stroke="#1d4ed8" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M160 158 L176 168" stroke="#1d4ed8" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </section>
+
+  <section id="comparacao" class="single">
+    <div class="col-text" style="max-width:920px;">
+      <p class="kicker shared">Comparação Direta · 3 min</p>
+      <h2>Bomba Lógica × Time Bomb</h2>
+      <table>
+        <tr><th></th><th class="lb-col">Bomba Lógica</th><th class="tb-col">Time Bomb</th></tr>
+        <tr>
+          <td>Gatilho principal</td>
+          <td class="lb-col">Evento ou mudança de estado (ex: banco de dados, arquivo, registro)</td>
+          <td class="tb-col">Data, hora, tempo decorrido ou contador</td>
+        </tr>
+        <tr>
+          <td>Dependência do relógio</td>
+          <td class="lb-col">Não depende do relógio do sistema operacional</td>
+          <td class="tb-col">Alta — lê o System Clock ou contador próprio</td>
+        </tr>
+        <tr>
+          <td>Geração de log de tempo</td>
+          <td class="lb-col">Assíncrona ao tempo; associada a ações/eventos do usuário</td>
+          <td class="tb-col">Sincronizada com o horário programado de disparo</td>
+        </tr>
+        <tr>
+          <td>Mapeamento em agendadores</td>
+          <td class="lb-col">Geralmente oculta em rotinas do próprio código ou da aplicação</td>
+          <td class="tb-col">Frequentemente abusa de utilitários nativos (Cron / Task Scheduler)</td>
+        </tr>
+        <tr>
+          <td>Evasão de análise</td>
+          <td class="lb-col">Complexa — só altera o comportamento se a condição for verdadeira</td>
+          <td class="tb-col">Pode ser detectada avançando artificialmente o relógio do sistema em sandbox</td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+  <section id="neutralizacao">
+    <div class="col-text">
+      <p class="kicker shared">Análise Visual e Processo de Neutralização · 3 min</p>
+      <h2>Do gatilho à contenção</h2>
+      <div class="flow">[Gatilho (Estado/Data)] &rarr; [Validação Booleana] &rarr; [Execução do Payload Destrutivo]</div>
+      <h3>Processo de difusão (baseado em metodologia SANS)</h3>
+      <ol class="diffuse">
+        <li><strong>Isolar</strong> o host da rede.</li>
+        <li><strong>Preservar evidências forenses</strong> antes de alterar o estado do sistema.</li>
+        <li><strong>Restaurar</strong> o ambiente em laboratório isolado.</li>
+        <li><strong>Validar</strong> que o backup não contém o gatilho nem o código dormente.</li>
+        <li><strong>Testar</strong> manipulando o relógio do sistema e analisando chamadas de sistema (<em>diffusing</em>).</li>
+        <li><strong>Restaurar</strong> o serviço de forma monitorada.</li>
+      </ol>
+    </div>
+    <div class="col-art">
+      <svg viewBox="0 0 320 320" fill="none">
+        <circle cx="90" cy="160" r="34" stroke="#6d28d9" stroke-width="1.8"/>
+        <path d="M124 160 H176" stroke="#5d5c74" stroke-width="1.6" stroke-dasharray="4 5"/>
+        <circle cx="210" cy="160" r="34" stroke="#1d4ed8" stroke-width="1.8"/>
+        <path d="M78 148 L102 172 M102 148 L78 172" stroke="#6d28d9" stroke-width="2"/>
+        <path d="M198 148 L210 160 L222 148 M198 172 L210 160" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="160" cy="160" r="3" fill="#5d5c74"/>
+      </svg>
+    </div>
+  </section>
+
+  <section id="desafio">
+    <div class="col-text">
+      <p class="kicker shared">Conclusão + Desafio do Analista · 2 min</p>
+      <h2>Conclusão</h2>
+      <p>Ameaças com gatilhos exigem uma estratégia de defesa em profundidade que vá além da detecção de assinaturas de malware — focando na integridade de arquivos, gestão de acessos e rigor com ex-colaboradores.</p>
+      <div class="challenge">
+        <p class="kicker shared" style="margin-bottom:6px;">Desafio do Analista</p>
+        <p>Na TechSecure S.A., após a demissão de um engenheiro, os servidores de banco de dados pararam de responder exatamente às 02h00 do domingo seguinte, sem nenhuma alteração nos registros de usuários no dia. Qual foi a ameaça responsável?</p>
+        <details>
+          <summary>Revelar resposta</summary>
+          <p><strong>Time Bomb</strong> — disparo agendado baseado em data/hora fixa (agendador), e não por verificação de estado em tempo real.</p>
+        </details>
+      </div>
+    </div>
+    <div class="col-art">
+      <svg viewBox="0 0 320 320" fill="none">
+        <path d="M120 110 C120 80 145 65 165 65 C190 65 210 82 210 108 C210 132 185 138 175 155 C168 167 168 178 168 186" stroke="#1c1b2e" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="168" cy="222" r="4.5" fill="#1c1b2e"/>
+        <circle cx="70" cy="70" r="3" fill="#6d28d9"/>
+        <circle cx="250" cy="90" r="3" fill="#1d4ed8"/>
+        <circle cx="260" cy="230" r="3" fill="#6d28d9"/>
+        <circle cx="60" cy="240" r="3" fill="#1d4ed8"/>
+      </svg>
+    </div>
+  </section>
+
+  <footer id="referencias" class="section-refs" style="min-height:auto; display:block; padding:80px 64px 100px;">
+    <div class="col-text" style="max-width:700px;">
+      <p class="kicker shared">Referências</p>
+      <ol>
+        <li>NIST CSRC — Glossary: <em>Logic Bomb</em>. <a href="https://csrc.nist.gov/glossary/term/logic_bomb" target="_blank">csrc.nist.gov/glossary/term/logic_bomb</a></li>
+        <li>MITRE ATT&amp;CK — <em>T1485: Data Destruction</em>. <a href="https://attack.mitre.org/techniques/T1485/" target="_blank">attack.mitre.org/techniques/T1485</a></li>
+        <li>CISA — <em>Insider Threat Mitigation Guide</em>. <a href="https://www.cisa.gov/resources-tools/resources/insider-threat-mitigation-guide" target="_blank">cisa.gov</a></li>
+        <li>U.S. Department of Justice — Caso UBS PaineWebber (Duronio). <a href="https://www.justice.gov/archive/criminal/cybercrime/press-releases/2002/duronioIndict.htm" target="_blank">justice.gov</a></li>
+        <li>U.S. Department of Justice — Caso Fannie Mae (Makwana). <a href="https://www.justice.gov/archive/usao/md/news/archive/FormerEmployeeofFannieMaeContractorConvictedOfAttemptingtoDestroyFannieMaeComputerData.html" target="_blank">justice.gov</a></li>
+        <li>SANS Institute / GIAC — <em>Diffusing the Logic Bomb</em>. <a href="https://www.giac.org/paper/gsec/3504/diffusing-logic-bomb/105715" target="_blank">giac.org</a></li>
+      </ol>
+    </div>
+  </footer>
+
+</main>
+
+<script>
+  const links = document.querySelectorAll('nav.links a');
+  const sections = Array.from(links).map(l => document.getElementById(l.dataset.section));
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const link = document.querySelector('nav.links a[data-section="' + entry.target.id + '"]');
+      if (!link) return;
+      if (entry.isIntersecting){
+        links.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      }
+    });
+  }, { root: null, threshold: 0, rootMargin: '-45% 0px -45% 0px' });
+  sections.forEach(s => { if (s) observer.observe(s); });
+</script>
+
+</body>
+</html>
