@@ -230,7 +230,7 @@
 
   <section id="inicio" class="hero">
     <div class="col-text">
-      <p class="kicker shared">Contextualização e Objetivo · 2 min</p>
+      <p class="kicker shared">Contextualização e Objetivo</p>
       <h2>Duas formas de esperar antes de atacar.</h2>
       <p class="lead">Apresentação do programa interno de conscientização e resposta a incidentes da TechSecure S.A. Nosso objetivo é explicar e diferenciar ameaças baseadas em gatilhos condicionais e temporais, demonstrando seu funcionamento técnico, impactos e formas de mitigação.</p>
       <p><strong>Em uma frase:</strong> uma análise profunda sobre como códigos ocultos utilizam lógica de estado e tempo para disparar cargas destrutivas — e como os analistas de segurança podem neutralizá-los.</p>
@@ -250,7 +250,7 @@
 
   <section id="lb-conceito">
     <div class="col-text">
-      <p class="kicker lb">Bomba Lógica · Conceito e Histórico · 5 min</p>
+      <p class="kicker lb">Bomba Lógica · Conceito e Histórico</p>
       <h2>Bomba Lógica <span style="color:var(--ink-dim); font-weight:400; font-size:23px;">(Logic Bomb / Slag Code)</span></h2>
       <p><strong>Definição oficial:</strong> instrução ou código inserido intencionalmente em um software para disparar uma função maliciosa quando condições lógicas específicas forem atendidas.</p>
       <h3>Histórico e evolução</h3>
@@ -265,7 +265,7 @@
 
   <section id="lb-funcionamento">
     <div class="col-text">
-      <p class="kicker lb">Bomba Lógica · Funcionamento, Caso e Defesa · 5 min</p>
+      <p class="kicker lb">Bomba Lógica · Funcionamento, Caso e Defesa</p>
       <h2>Como ela executa</h2>
       <h3>Mecanismo de execução</h3>
       <p>Verificação contínua ou condicional de variáveis de estado do sistema operacional — por exemplo, a remoção do nome do funcionário da base do RH, alteração de um registro, ou ausência de sinal do tipo <em>Dead Man's Switch</em>.</p>
@@ -274,14 +274,20 @@
     </div>
     <div class="col-art">
       <svg viewBox="0 0 320 340" fill="none">
-        <rect x="90" y="30" width="140" height="46" rx="6" stroke="#6d28d9" stroke-width="1.6"/>
+        <rect x="85" y="30" width="150" height="46" rx="6" stroke="#6d28d9" stroke-width="1.6" fill="#ffffff"/>
         <text x="160" y="58" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#6d28d9">condição = estado</text>
-        <path d="M160 76 V110" stroke="#6d28d9" stroke-width="1.6"/>
-        <path d="M160 150 L200 180 L160 210 L120 180 Z" stroke="#6d28d9" stroke-width="1.6"/>
-        <text x="160" y="184" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#6d28d9">?</text>
-        <path d="M160 210 V244" stroke="#6d28d9" stroke-width="1.6"/>
-        <rect x="80" y="244" width="160" height="50" rx="6" fill="#efe9fd" stroke="#6d28d9" stroke-width="1.6"/>
-        <text x="160" y="274" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#6d28d9">payload destrutivo</text>
+        <path d="M160 76 V142" stroke="#6d28d9" stroke-width="1.6"/>
+        <path d="M155 134 L160 142 L165 134" stroke="#6d28d9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M160 142 L196 174 L160 206 L124 174 Z" stroke="#6d28d9" stroke-width="1.6" fill="#ffffff"/>
+        <text x="160" y="178" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#6d28d9">?</text>
+        <path d="M124 174 H62 V53 H85" stroke="#6d28d9" stroke-width="1.3" stroke-dasharray="3 4" opacity="0.45"/>
+        <path d="M79 48 L85 53 L79 58" stroke="#6d28d9" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"/>
+        <text x="50" y="118" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#5d5c74">Falso</text>
+        <path d="M160 206 V252" stroke="#6d28d9" stroke-width="1.6"/>
+        <path d="M155 244 L160 252 L165 244" stroke="#6d28d9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="174" y="232" font-family="IBM Plex Mono" font-size="10" font-weight="600" fill="#6d28d9">Sim</text>
+        <rect x="75" y="252" width="170" height="48" rx="6" fill="#efe9fd" stroke="#6d28d9" stroke-width="1.6"/>
+        <text x="160" y="281" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#6d28d9">payload destrutivo</text>
       </svg>
     </div>
   </section>
@@ -331,7 +337,7 @@
 
   <section id="tb-conceito">
     <div class="col-text">
-      <p class="kicker tb">Time Bomb · Conceito e Histórico · 5 min</p>
+      <p class="kicker tb">Time Bomb · Conceito e Histórico</p>
       <h2>Time Bomb <span style="color:var(--ink-dim); font-weight:400; font-size:23px;">(Bomba Relógio)</span></h2>
       <p><strong>Definição oficial:</strong> subcategoria de bomba lógica cujo gatilho é estritamente baseado no fator tempo.</p>
       <h3>Histórico e evolução</h3>
@@ -340,23 +346,13 @@
       <p>Utiliza o relógio do sistema (<em>System Clock</em>), contadores de tempo decorrido ou utilitários de agendamento de tarefas para disparar o payload.</p>
     </div>
     <div class="col-art">
-      <svg viewBox="0 0 320 320" fill="none">
-        <circle cx="160" cy="160" r="96" stroke="#1d4ed8" stroke-width="1.8"/>
-        <circle cx="160" cy="160" r="3.5" fill="#1d4ed8"/>
-        <path d="M160 160 L160 96" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round"/>
-        <path d="M160 160 L206 186" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round"/>
-        <path d="M160 66 V78" stroke="#1d4ed8" stroke-width="1.6"/>
-        <path d="M160 242 V254" stroke="#1d4ed8" stroke-width="1.6"/>
-        <path d="M254 160 H242" stroke="#1d4ed8" stroke-width="1.6"/>
-        <path d="M78 160 H66" stroke="#1d4ed8" stroke-width="1.6"/>
-        <circle cx="160" cy="66" r="4" fill="#e0edff" stroke="#1d4ed8" stroke-width="1.6"/>
-      </svg>
+      <img src="assets/time-bomb-clock.svg" alt="Ilustração animada de um relógio com contagem regressiva e detonação temporal da Time Bomb" style="width:100%; max-width:320px; height:auto;">
     </div>
   </section>
 
   <section id="tb-funcionamento">
     <div class="col-text">
-      <p class="kicker tb">Time Bomb · Funcionamento, Caso e Defesa · 5 min</p>
+      <p class="kicker tb">Time Bomb · Funcionamento, Caso e Defesa</p>
       <h2>Como ela executa</h2>
       <h3>Mecanismo de execução</h3>
       <p>Avaliação condicional de data/hora fixa, contagem regressiva de segundos, ou agendamento via Cron (Linux) / Task Scheduler (Windows).</p>
@@ -426,7 +422,7 @@
 
   <section id="comparacao" class="single">
     <div class="col-text" style="max-width:920px;">
-      <p class="kicker shared">Comparação Direta · 3 min</p>
+      <p class="kicker shared">Comparação Direta</p>
       <h2>Bomba Lógica × Time Bomb</h2>
       <table>
         <tr><th></th><th class="lb-col">Bomba Lógica</th><th class="tb-col">Time Bomb</th></tr>
@@ -461,7 +457,7 @@
 
   <section id="neutralizacao">
     <div class="col-text">
-      <p class="kicker shared">Análise Visual e Processo de Neutralização · 3 min</p>
+      <p class="kicker shared">Análise Visual e Processo de Neutralização</p>
       <h2>Do gatilho à contenção</h2>
       <div class="flow">[Gatilho (Estado/Data)] &rarr; [Validação Booleana] &rarr; [Execução do Payload Destrutivo]</div>
       <h3>Processo de difusão (baseado em metodologia SANS)</h3>
@@ -488,7 +484,7 @@
 
   <section id="desafio">
     <div class="col-text">
-      <p class="kicker shared">Conclusão + Desafio do Analista · 2 min</p>
+      <p class="kicker shared">Conclusão + Desafio do Analista</p>
       <h2>Conclusão</h2>
       <p>Ameaças com gatilhos exigem uma estratégia de defesa em profundidade que vá além da detecção de assinaturas de malware — focando na integridade de arquivos, gestão de acessos e rigor com ex-colaboradores.</p>
       <div class="challenge">
