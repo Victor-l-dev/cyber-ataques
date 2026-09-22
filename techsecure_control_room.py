@@ -3,8 +3,9 @@
 TECHSECURE S.A. -- SALA DE CONTROLE DE INCIDENTES
 Simulacao imersiva em Pygame para dinamicas de conscientizacao em
 ciberseguranca. O jogador atua como Analista de Plantao e precisa
-investigar tres servidores comprometidos antes que o tempo acabe ou a
-integridade da rede corporativa chegue a zero.
+investigar SETE servidores comprometidos, com pistas mais sutis e
+pegadinhas no log, antes que o tempo (reduzido) acabe ou a integridade
+da rede corporativa chegue a zero.
 
 LAYOUT:
   - HUD SUPERIOR: cronometro regressivo em tempo real + barra de
@@ -40,11 +41,11 @@ pygame.init()
 WIDTH, HEIGHT = 1150, 760
 FPS = 60
 
-GLOBAL_TIME = 240.0          # 4 minutos de missao
+GLOBAL_TIME = 150.0           # tempo total reduzido -- mais dificil
 INTEGRITY_START = 100
 WRONG_PENALTY = 15
-CONNECT_TIME = 1.3           # duracao da animacao de "conectando..."
-FEEDBACK_HOLD = 3.5           # segundos mostrando o resultado do diagnostico
+CONNECT_TIME = 1.1           # duracao da animacao de "conectando..."
+FEEDBACK_HOLD = 3.2           # segundos mostrando o resultado do diagnostico
 
 BG = (5, 7, 11)
 PANEL_BG = (13, 17, 26)
@@ -170,75 +171,187 @@ class Typewriter:
 SERVERS = [
     {
         "id": "SRV-RH01",
-        "label": "Servidor de Banco de Dados e RH",
+        "label": "Banco de Dados de RH",
         "type": "LOGICA",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-RH01",
             "[AUDITORIA] Extraindo trigger suspeito da tabela 'funcionarios'...",
             "",
             "-- trigger: after_update ON tabela_funcionarios",
+            "-- ultima manutencao registrada: 15/06/2025",
             "IF NEW.status_emprego = 'DEMITIDO' THEN",
             "    EXECUTE limpar_registros_criticos(NEW.id_funcionario);",
             "    EXECUTE revogar_credenciais_admin();",
             "END IF;",
             "",
-            "[PISTA] O disparo depende de uma mudanca de ESTADO no banco",
-            "        de dados (status do funcionario), nao de uma data.",
+            "[NOTA DO SISTEMA] A data de manutencao acima e apenas um",
+            "                  registro de log, nao faz parte da condicao",
+            "                  que ativa o bloco EXECUTE.",
         ],
         "explain": (
             "Correto: e uma BOMBA LOGICA. O trigger so executa quando uma "
             "CONDICAO de negocio se torna verdadeira (status = 'DEMITIDO'). "
-            "Nao ha nenhuma comparacao de data ou hora envolvida -- a "
-            "logica reage a um ESTADO do sistema. Esse padrao e associado "
-            "a insider threats (MITRE ATT&CK T1485)."
+            "A data de 'ultima manutencao' no comentario e apenas "
+            "metadado de log -- uma pegadinha comum: nem toda data no "
+            "codigo e o gatilho real. A logica reage a um ESTADO do "
+            "sistema (MITRE ATT&CK T1485)."
         ),
     },
     {
         "id": "SRV-FIN02",
-        "label": "Servidor Financeiro e Agendador Cron",
+        "label": "Financeiro / Agendador Cron",
         "type": "RELOGIO",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-FIN02",
             "[AUDITORIA] Lendo tarefas agendadas em /etc/cron.d/...",
             "",
             "# /etc/cron.d/maintenance",
+            "# executa apenas se o disco tiver espaco livre (checagem de rotina)",
             "0 3 15 6 * root /opt/scripts/cleanup_all.sh --force",
             "",
             "# cleanup_all.sh executa: rm -rf /data/financeiro/* sem confirmacao",
             "",
-            "[PISTA] A tarefa dispara em uma DATA E HORA fixas (dia 15/06,",
-            "        03h), independente de qualquer condicao do sistema.",
+            "[NOTA DO SISTEMA] A checagem de espaco em disco e uma rotina",
+            "                  padrao do cron, nao uma condicao de negocio.",
+            "                  O disparo em si depende so do horario agendado.",
         ],
         "explain": (
             "Correto: e uma BOMBA RELOGIO. A entrada de cron dispara em "
-            "uma data/hora especifica e fixa, sem depender de nenhum "
-            "estado do sistema -- padrao classico de gatilho temporal. "
-            "O NIST recomenda auditoria periodica de tarefas agendadas em "
-            "servidores criticos."
+            "uma data/hora especifica e fixa (dia 15/06, 03h). O comentario "
+            "sobre 'espaco em disco' e uma checagem tecnica de rotina do "
+            "sistema operacional, nao uma condicao de negocio -- outra "
+            "pegadinha para testar a leitura atenta do log."
         ),
     },
     {
         "id": "SRV-PROD03",
-        "label": "Servidor de Producao",
+        "label": "Producao (Monitoramento)",
         "type": "LOGICA",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-PROD03",
             "[AUDITORIA] Analisando processo watchdog em segundo plano...",
             "",
-            "# heartbeat esperado a cada check-in do analista responsavel",
-            "if dias_desde_ultimo_checkin('analista_producao') > 15:",
-            "    liberar_payload_destrutivo()",
+            "# roda a cada 24 horas (ciclo do watchdog)",
+            "a_cada_24h:",
+            "    if dias_desde_ultimo_checkin('analista_producao') > 15:",
+            "        liberar_payload_destrutivo()",
             "",
-            "[PISTA] O disparo depende da AUSENCIA continuada de uma acao",
-            "        humana (check-in), nao de um horario fixo no calendario.",
+            "[NOTA DO SISTEMA] O watchdog SEMPRE roda a cada 24h -- isso e",
+            "                  so a frequencia de verificacao. A condicao",
+            "                  real esta dentro do IF: dias sem check-in.",
         ],
         "explain": (
-            "Correto: e uma BOMBA LOGICA (variante Dead Man's Switch). O "
-            "disparo depende da AUSENCIA de uma acao esperada (check-in do "
-            "analista), nao de uma data/hora fixa -- ainda e um gatilho de "
-            "ESTADO, so que definido pela falta de um evento. Recomendacao: "
-            "monitorar logica condicionada a inatividade de contas "
-            "privilegiadas."
+            "Correto: e uma BOMBA LOGICA (variante Dead Man's Switch). "
+            "Repare na pegadinha: 'roda a cada 24 horas' descreve apenas a "
+            "FREQUENCIA com que o watchdog verifica algo -- o disparo real "
+            "acontece pela AUSENCIA de check-in por mais de 15 dias, um "
+            "ESTADO do sistema, nao uma data fixa no calendario."
+        ),
+    },
+    {
+        "id": "SRV-LIC04",
+        "label": "Licenciamento e Integridade",
+        "type": "LOGICA",
+        "log": [
+            "[AUDITORIA] Conexao estabelecida com SRV-LIC04",
+            "[AUDITORIA] Verificando modulo de licenciamento...",
+            "",
+            "def checagem_integridade():",
+            "    # licenca emitida em 01/01/2024, validade prevista: 2030",
+            "    hash_atual = calcular_hash(binario_core)",
+            "    if hash_atual != HASH_ESPERADO:",
+            "        travar_producao()",
+            "",
+            "[NOTA DO SISTEMA] As datas de emissao/validade sao apenas",
+            "                  informativas. A funcao so age se o HASH",
+            "                  do binario for alterado.",
+        ],
+        "explain": (
+            "Correto: e uma BOMBA LOGICA. Apesar de o comentario mostrar "
+            "datas de emissao e validade, a condicao real do IF compara "
+            "HASHES -- ou seja, dispara quando o binario e alterado (um "
+            "ESTADO de integridade), nao em uma data especifica. Padrao "
+            "associado a retaliacao contra auditorias ou patches."
+        ),
+    },
+    {
+        "id": "SRV-NTP05",
+        "label": "Sincronizacao de Horario (NTP)",
+        "type": "RELOGIO",
+        "log": [
+            "[AUDITORIA] Conexao estabelecida com SRV-NTP05",
+            "[AUDITORIA] Inspecionando processo de sincronizacao...",
+            "",
+            "# usuario_atual = 'admin' (sessao ativa no momento da captura)",
+            "while True:",
+            "    if system_clock.now() >= datetime(2026, 12, 31, 23, 59):",
+            "        corromper_backup_incremental()",
+            "    sleep(3600)",
+            "",
+            "[NOTA DO SISTEMA] O comentario sobre o usuario 'admin' e so",
+            "                  informacao de sessao, nao faz parte da",
+            "                  condicao do IF.",
+        ],
+        "explain": (
+            "Correto: e uma BOMBA RELOGIO. O comentario sobre o usuario "
+            "'admin' logado e apenas contexto da captura de tela do log -- "
+            "irrelevante para o gatilho. A condicao real compara o relogio "
+            "do sistema com uma data-alvo fixa (31/12/2026), uma "
+            "assinatura classica de gatilho temporal."
+        ),
+    },
+    {
+        "id": "SRV-BKP06",
+        "label": "Backup / Processo Watchdog",
+        "type": "RELOGIO",
+        "log": [
+            "[AUDITORIA] Conexao estabelecida com SRV-BKP06",
+            "[AUDITORIA] Lendo script de watchdog de backups...",
+            "",
+            "cron: */5 * * * * root /opt/agents/watchdog.sh",
+            "",
+            "watchdog.sh:",
+            "  # verifica se o job de backup anterior teve sucesso",
+            "  ultimo_backup_ok=$(checar_status_backup)",
+            "  now=$(date +%s)",
+            "  if [ $now -ge 1798761600 ]; then rm -rf /backups/*; fi",
+            "",
+            "[NOTA DO SISTEMA] A variavel 'ultimo_backup_ok' e consultada",
+            "                  mas NUNCA usada na condicao do IF abaixo.",
+        ],
+        "explain": (
+            "Correto: e uma BOMBA RELOGIO. Apesar de o script consultar o "
+            "status do ultimo backup (parece uma condicao de negocio), "
+            "essa variavel nunca e usada na comparacao real -- o IF so "
+            "compara um timestamp epoch fixo. Pegadinha classica: codigo "
+            "morto que parece condicional, mas o gatilho e puramente "
+            "temporal."
+        ),
+    },
+    {
+        "id": "SRV-DEV07",
+        "label": "Certificados (DevOps)",
+        "type": "LOGICA",
+        "log": [
+            "[AUDITORIA] Conexao estabelecida com SRV-DEV07",
+            "[AUDITORIA] Analisando pipeline de certificados...",
+            "",
+            "# certificado emitido: 10/03/2025 -- expira em: 10/03/2026",
+            "def verificar_certificado():",
+            "    if not certificado.foi_renovado_por('equipe_seguranca'):",
+            "        bloquear_deploys()",
+            "        notificar_conselho_admin()",
+            "",
+            "[NOTA DO SISTEMA] Embora existam datas de emissao/expiracao,",
+            "                  a funcao verifica QUEM renovou o",
+            "                  certificado, nao QUANDO ele expira.",
+        ],
+        "explain": (
+            "Correto: e uma BOMBA LOGICA. As datas de emissao e expiracao "
+            "sao contexto, mas a condicao real do IF verifica se uma "
+            "EQUIPE especifica renovou o certificado -- um ESTADO "
+            "organizacional, nao uma data de calendario. Um atacante real "
+            "usaria isso para sabotar apos ser removido da equipe."
         ),
     },
 ]
@@ -252,7 +365,7 @@ BOOT_LINES = [
     "CARREGANDO INVENTARIO DE SERVIDORES AFETADOS...",
     "SINCRONIZANDO RELOGIO DE AUDITORIA...",
     "ESTABELECENDO CANAL SEGURO COM O SOC...",
-    "3 INCIDENTES ATIVOS DETECTADOS.",
+    "7 INCIDENTES ATIVOS DETECTADOS.",
     "INTEGRIDADE DA REDE CORPORATIVA: 100%",
     "AGUARDANDO ANALISTA DE PLANTAO...",
 ]
@@ -416,8 +529,8 @@ def draw_server_list():
     draw_text(screen, "SERVIDORES AFETADOS", font_h2, NEON_PINK, panel.x + 16, panel.y + 14)
     pygame.draw.line(screen, GRID_LINE, (panel.x + 16, panel.y + 44), (panel.right - 16, panel.y + 44), 1)
 
-    y = panel.y + 58
-    card_h = 110
+    y = panel.y + 54
+    card_h = 68
     for i, srv in enumerate(state.servers):
         rect = pygame.Rect(panel.x + 14, y, panel.width - 28, card_h)
         selected = (state.selected == i and state.status in ("connecting", "analyzing", "feedback"))
@@ -427,17 +540,17 @@ def draw_server_list():
         neon_panel(rect, border, bg_color=(16, 18, 26), width=2, radius=8)
 
         dot_color = NEON_GREEN if srv["state"] == "secured" else (NEON_RED if srv["attempts"] > 0 else TEXT_DIM)
-        pygame.draw.circle(screen, dot_color, (rect.x + 18, rect.y + 20), 7)
+        pygame.draw.circle(screen, dot_color, (rect.x + 16, rect.y + 18), 6)
 
-        draw_text(screen, srv["id"], font_body, NEON_CYAN, rect.x + 34, rect.y + 10)
-        for j, line in enumerate(wrap_text(srv["label"], font_small, rect.width - 46)):
-            draw_text(screen, line, font_small, TEXT_MAIN, rect.x + 34, rect.y + 34 + j * 18)
+        draw_text(screen, srv["id"], font_small, NEON_CYAN, rect.x + 30, rect.y + 8)
+        label_lines = wrap_text(srv["label"], font_small, rect.width - 42)
+        draw_text(screen, label_lines[0] if label_lines else "", font_small, TEXT_MAIN, rect.x + 30, rect.y + 26)
 
         status_key = "secured" if srv["state"] == "secured" else ("compromised" if srv["attempts"] > 0 else "pendente")
         draw_text(screen, STATUS_LABELS[status_key], font_small, STATUS_COLORS[status_key],
-                  rect.x + 34, rect.bottom - 22)
+                  rect.x + 30, rect.bottom - 18)
 
-        y += card_h + 14
+        y += card_h + 8
 
 
 # ---------------------------------------------------------------------------
@@ -588,31 +701,27 @@ def draw_end_screen():
         "Tempo esgotado ou integridade da rede zerada." if not victory else "")
     color = NEON_GREEN if victory else NEON_RED
 
-    draw_text(screen, title, font_title, color, WIDTH // 2, 130, center=True)
-    draw_text(screen, sub, font_body, TEXT_DIM, WIDTH // 2, 168, center=True)
+    draw_text(screen, title, font_title, color, WIDTH // 2, 76, center=True)
+    draw_text(screen, sub, font_small, TEXT_DIM, WIDTH // 2, 108, center=True)
 
-    draw_text(screen, f"Servidores neutralizados: {state.secured_count()}/{len(state.servers)}",
-              font_h2, NEON_YELLOW, WIDTH // 2, 220, center=True)
-    draw_text(screen, f"Falhas de diagnostico: {state.mistakes}", font_body, TEXT_MAIN,
-              WIDTH // 2, 252, center=True)
-    draw_text(screen, f"Integridade final: {max(0, state.integrity)}%", font_body, TEXT_MAIN,
-              WIDTH // 2, 278, center=True)
+    draw_text(screen, f"Servidores neutralizados: {state.secured_count()}/{len(state.servers)}"
+                       f"   |   Falhas: {state.mistakes}   |   Integridade final: {max(0, state.integrity)}%",
+              font_body, NEON_YELLOW, WIDTH // 2, 138, center=True)
 
-    panel = pygame.Rect(120, 320, WIDTH - 240, 320)
+    panel = pygame.Rect(90, 168, WIDTH - 180, HEIGHT - 210)
     neon_panel(panel, NEON_CYAN)
-    draw_text(screen, "RESUMO TECNICO DOS INCIDENTES:", font_body, TEXT_MAIN, panel.x + 20, panel.y + 16)
-    y = panel.y + 50
+    draw_text(screen, "RESUMO TECNICO DOS INCIDENTES:", font_body, TEXT_MAIN, panel.x + 20, panel.y + 12)
+    y = panel.y + 42
     for srv in state.servers:
         result = "NEUTRALIZADO" if srv["state"] == "secured" else "NAO RESOLVIDO"
         rcolor = NEON_GREEN if srv["state"] == "secured" else NEON_RED
-        draw_text(screen, f"{srv['id']} ({srv['label']}) -- {result}", font_small, rcolor, panel.x + 20, y)
-        y += 24
-        tipo = "Bomba Logica (gatilho de estado)" if srv["type"] == "LOGICA" else "Bomba Relogio (gatilho temporal)"
-        draw_text(screen, f"   Classificacao correta: {tipo}", font_small, TEXT_DIM, panel.x + 20, y)
-        y += 30
+        tipo = "Bomba Logica" if srv["type"] == "LOGICA" else "Bomba Relogio"
+        draw_text(screen, f"{srv['id']} ({srv['label']}) -- {result}  |  Classificacao correta: {tipo}",
+                  font_small, rcolor, panel.x + 20, y)
+        y += 21
 
     draw_text(screen, "Pressione R para reiniciar  |  ESC para sair", font_small, TEXT_DIM,
-              WIDTH // 2, HEIGHT - 25, center=True)
+              WIDTH // 2, HEIGHT - 16, center=True)
 
 
 # ---------------------------------------------------------------------------
@@ -636,14 +745,14 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if state.status == "hub":
                     panel = pygame.Rect(20, 128, 330, HEIGHT - 160)
-                    y = panel.y + 58
-                    card_h = 110
+                    y = panel.y + 54
+                    card_h = 68
                     for i in range(len(state.servers)):
                         rect = pygame.Rect(panel.x + 14, y, panel.width - 28, card_h)
                         if rect.collidepoint(event.pos) and state.servers[i]["state"] != "secured":
                             state.select_server(i)
                             break
-                        y += card_h + 14
+                        y += card_h + 8
                 elif state.status == "analyzing":
                     panel = pygame.Rect(368, 128, WIDTH - 388, HEIGHT - 160)
                     for kind, rect in diagnosis_button_rects(panel).items():
