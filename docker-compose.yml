@@ -1,0 +1,17 @@
+services:
+  web:
+    image: nginx:alpine
+    container_name: cyber-ataques-web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./bomba-logica.html:/usr/share/nginx/html/index.html:ro
+      - ./assets:/usr/share/nginx/html/assets:ro
+    restart: unless-stopped
+
+  techsecure:
+    build: .
+    container_name: cyber-ataques-techsecure
+    ports:
+      - "6080:6080"
+    restart: "no"

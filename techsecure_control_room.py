@@ -3,7 +3,7 @@
 TECHSECURE S.A. -- SALA DE CONTROLE DE INCIDENTES
 Simulacao imersiva em Pygame para dinamicas de conscientizacao em
 ciberseguranca. O jogador atua como Analista de Plantao e precisa
-investigar SETE servidores comprometidos, com pistas mais sutis e
+investigar CINCO servidores comprometidos, com pistas mais sutis e
 pegadinhas no log, antes que o tempo (reduzido) acabe ou a integridade
 da rede corporativa chegue a zero.
 
@@ -16,6 +16,10 @@ LAYOUT:
     capturado no servidor selecionado, com pistas sobre o tipo de
     gatilho (Bomba Logica x Bomba Relogio), revelado com efeito de
     maquina de escrever.
+  - Apos um diagnostico correto, o analista precisa digitar o comando
+    de reinicio do servidor para concluir a neutralizacao. O comando
+    esta escondido no proprio log/codigo capturado, junto de outras
+    linhas de auditoria -- exige leitura atenta, nao e destacado.
 
 IMPORTANTE: todo o conteudo (logs, codigo) e ficticio e ilustrativo,
 criado apenas para fins didaticos. Nao ha codigo malicioso real nem
@@ -23,6 +27,8 @@ tecnicas de invasao.
 
 Controles:
   - Mouse: selecionar servidor / clicar em BOMBA LOGICA ou BOMBA RELOGIO
+  - Teclado: apos diagnostico correto, digitar o comando de reinicio
+    encontrado no log e pressionar ENTER (BACKSPACE apaga)
   - ESPACO: avancar a sequencia de inicializacao / tela final -> reinicio
   - R: reiniciar apos a tela final
   - ESC: sair
@@ -173,6 +179,7 @@ SERVERS = [
         "id": "SRV-RH01",
         "label": "Banco de Dados de RH",
         "type": "LOGICA",
+        "restart_cmd": "restart-db rh01",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-RH01",
             "[AUDITORIA] Extraindo trigger suspeito da tabela 'funcionarios'...",
@@ -183,6 +190,9 @@ SERVERS = [
             "    EXECUTE limpar_registros_criticos(NEW.id_funcionario);",
             "    EXECUTE revogar_credenciais_admin();",
             "END IF;",
+            "",
+            "# historico do NOC (ultimo comando executado no host):",
+            "#   $ restart-db rh01",
             "",
             "[NOTA DO SISTEMA] A data de manutencao acima e apenas um",
             "                  registro de log, nao faz parte da condicao",
@@ -201,6 +211,7 @@ SERVERS = [
         "id": "SRV-FIN02",
         "label": "Financeiro / Agendador Cron",
         "type": "RELOGIO",
+        "restart_cmd": "systemctl restart fin02",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-FIN02",
             "[AUDITORIA] Lendo tarefas agendadas em /etc/cron.d/...",
@@ -210,6 +221,8 @@ SERVERS = [
             "0 3 15 6 * root /opt/scripts/cleanup_all.sh --force",
             "",
             "# cleanup_all.sh executa: rm -rf /data/financeiro/* sem confirmacao",
+            "",
+            "# bash_history (root@fin02): systemctl restart fin02",
             "",
             "[NOTA DO SISTEMA] A checagem de espaco em disco e uma rotina",
             "                  padrao do cron, nao uma condicao de negocio.",
@@ -227,6 +240,7 @@ SERVERS = [
         "id": "SRV-PROD03",
         "label": "Producao (Monitoramento)",
         "type": "LOGICA",
+        "restart_cmd": "reboot-watchdog prod03",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-PROD03",
             "[AUDITORIA] Analisando processo watchdog em segundo plano...",
@@ -235,6 +249,8 @@ SERVERS = [
             "a_cada_24h:",
             "    if dias_desde_ultimo_checkin('analista_producao') > 15:",
             "        liberar_payload_destrutivo()",
+            "",
+            "# ultimo comando de manutencao registrado: reboot-watchdog prod03",
             "",
             "[NOTA DO SISTEMA] O watchdog SEMPRE roda a cada 24h -- isso e",
             "                  so a frequencia de verificacao. A condicao",
@@ -252,6 +268,7 @@ SERVERS = [
         "id": "SRV-LIC04",
         "label": "Licenciamento e Integridade",
         "type": "LOGICA",
+        "restart_cmd": "reload-license lic04",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-LIC04",
             "[AUDITORIA] Verificando modulo de licenciamento...",
@@ -261,6 +278,8 @@ SERVERS = [
             "    hash_atual = calcular_hash(binario_core)",
             "    if hash_atual != HASH_ESPERADO:",
             "        travar_producao()",
+            "",
+            "# comando registrado apos o ultimo patch: reload-license lic04",
             "",
             "[NOTA DO SISTEMA] As datas de emissao/validade sao apenas",
             "                  informativas. A funcao so age se o HASH",
@@ -278,6 +297,7 @@ SERVERS = [
         "id": "SRV-NTP05",
         "label": "Sincronizacao de Horario (NTP)",
         "type": "RELOGIO",
+        "restart_cmd": "resync-ntp ntp05",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-NTP05",
             "[AUDITORIA] Inspecionando processo de sincronizacao...",
@@ -287,6 +307,8 @@ SERVERS = [
             "    if system_clock.now() >= datetime(2026, 12, 31, 23, 59):",
             "        corromper_backup_incremental()",
             "    sleep(3600)",
+            "",
+            "# ultimo comando enviado pelo NOC ao host: resync-ntp ntp05",
             "",
             "[NOTA DO SISTEMA] O comentario sobre o usuario 'admin' e so",
             "                  informacao de sessao, nao faz parte da",
@@ -300,60 +322,6 @@ SERVERS = [
             "assinatura classica de gatilho temporal."
         ),
     },
-    {
-        "id": "SRV-BKP06",
-        "label": "Backup / Processo Watchdog",
-        "type": "RELOGIO",
-        "log": [
-            "[AUDITORIA] Conexao estabelecida com SRV-BKP06",
-            "[AUDITORIA] Lendo script de watchdog de backups...",
-            "",
-            "cron: */5 * * * * root /opt/agents/watchdog.sh",
-            "",
-            "watchdog.sh:",
-            "  # verifica se o job de backup anterior teve sucesso",
-            "  ultimo_backup_ok=$(checar_status_backup)",
-            "  now=$(date +%s)",
-            "  if [ $now -ge 1798761600 ]; then rm -rf /backups/*; fi",
-            "",
-            "[NOTA DO SISTEMA] A variavel 'ultimo_backup_ok' e consultada",
-            "                  mas NUNCA usada na condicao do IF abaixo.",
-        ],
-        "explain": (
-            "Correto: e uma BOMBA RELOGIO. Apesar de o script consultar o "
-            "status do ultimo backup (parece uma condicao de negocio), "
-            "essa variavel nunca e usada na comparacao real -- o IF so "
-            "compara um timestamp epoch fixo. Pegadinha classica: codigo "
-            "morto que parece condicional, mas o gatilho e puramente "
-            "temporal."
-        ),
-    },
-    {
-        "id": "SRV-DEV07",
-        "label": "Certificados (DevOps)",
-        "type": "LOGICA",
-        "log": [
-            "[AUDITORIA] Conexao estabelecida com SRV-DEV07",
-            "[AUDITORIA] Analisando pipeline de certificados...",
-            "",
-            "# certificado emitido: 10/03/2025 -- expira em: 10/03/2026",
-            "def verificar_certificado():",
-            "    if not certificado.foi_renovado_por('equipe_seguranca'):",
-            "        bloquear_deploys()",
-            "        notificar_conselho_admin()",
-            "",
-            "[NOTA DO SISTEMA] Embora existam datas de emissao/expiracao,",
-            "                  a funcao verifica QUEM renovou o",
-            "                  certificado, nao QUANDO ele expira.",
-        ],
-        "explain": (
-            "Correto: e uma BOMBA LOGICA. As datas de emissao e expiracao "
-            "sao contexto, mas a condicao real do IF verifica se uma "
-            "EQUIPE especifica renovou o certificado -- um ESTADO "
-            "organizacional, nao uma data de calendario. Um atacante real "
-            "usaria isso para sabotar apos ser removido da equipe."
-        ),
-    },
 ]
 
 
@@ -365,7 +333,7 @@ BOOT_LINES = [
     "CARREGANDO INVENTARIO DE SERVIDORES AFETADOS...",
     "SINCRONIZANDO RELOGIO DE AUDITORIA...",
     "ESTABELECENDO CANAL SEGURO COM O SOC...",
-    "7 INCIDENTES ATIVOS DETECTADOS.",
+    "5 INCIDENTES ATIVOS DETECTADOS.",
     "INTEGRIDADE DA REDE CORPORATIVA: 100%",
     "AGUARDANDO ANALISTA DE PLANTAO...",
 ]
@@ -379,7 +347,7 @@ class GameState:
         self.reset()
 
     def reset(self):
-        self.status = "boot"          # boot, hub, connecting, analyzing, feedback, gameover, victory
+        self.status = "boot"          # boot, hub, connecting, analyzing, feedback, restart_prompt, gameover, victory
         self.boot_index = 0
         self.boot_timer = 0.0
         self.time_left = GLOBAL_TIME
@@ -393,6 +361,8 @@ class GameState:
         self.feedback_timer = 0.0
         self.mistakes = 0
         self.glitch_timer = 0.0
+        self.command_input = ""
+        self.command_error = ""
 
     def secured_count(self):
         return sum(1 for s in self.servers if s["state"] == "secured")
@@ -411,7 +381,7 @@ class GameState:
         correct = kind == srv["type"]
         srv["attempts"] += 1
         if correct:
-            srv["state"] = "secured"
+            srv["state"] = "diagnosed"
             self.last_correct = True
         else:
             self.integrity -= WRONG_PENALTY
@@ -421,6 +391,22 @@ class GameState:
         self.last_explain = srv["explain"]
         self.status = "feedback"
         self.feedback_timer = FEEDBACK_HOLD
+
+    def submit_restart_command(self):
+        if self.status != "restart_prompt" or self.selected is None:
+            return
+        srv = self.servers[self.selected]
+        typed = self.command_input.strip().lower()
+        expected = srv["restart_cmd"].strip().lower()
+        if typed == expected:
+            srv["state"] = "secured"
+            self.command_input = ""
+            self.command_error = ""
+            self.back_to_hub_or_end()
+        else:
+            self.command_error = "Comando incorreto. Revise o log capturado e tente novamente."
+            self.command_input = ""
+            self.glitch_timer = 0.3
 
     def back_to_hub_or_end(self):
         if self.integrity <= 0:
@@ -439,7 +425,7 @@ class GameState:
                 self.boot_timer = 0.0
                 if self.boot_index < len(BOOT_LINES):
                     self.boot_index += 1
-        elif self.status in ("hub", "connecting", "analyzing", "feedback"):
+        elif self.status in ("hub", "connecting", "analyzing", "feedback", "restart_prompt"):
             self.time_left -= dt
             if self.glitch_timer > 0:
                 self.glitch_timer -= dt
@@ -462,7 +448,12 @@ class GameState:
             elif self.status == "feedback":
                 self.feedback_timer -= dt
                 if self.feedback_timer <= 0:
-                    self.back_to_hub_or_end()
+                    if self.last_correct:
+                        self.status = "restart_prompt"
+                        self.command_input = ""
+                        self.command_error = ""
+                    else:
+                        self.back_to_hub_or_end()
 
 
 state = GameState()
@@ -513,14 +504,26 @@ def draw_hud():
 
 STATUS_COLORS = {
     "pendente": TEXT_DIM,
+    "diagnosed": NEON_YELLOW,
     "secured": NEON_GREEN,
     "compromised": NEON_RED,
 }
 STATUS_LABELS = {
     "pendente": "NAO ANALISADO",
+    "diagnosed": "AGUARDANDO COMANDO",
     "secured": "NEUTRALIZADO",
     "compromised": "TENTATIVA FALHOU",
 }
+
+
+def server_status_key(srv):
+    if srv["state"] == "secured":
+        return "secured"
+    if srv["state"] == "diagnosed":
+        return "diagnosed"
+    if srv["attempts"] > 0:
+        return "compromised"
+    return "pendente"
 
 
 def draw_server_list():
@@ -533,20 +536,18 @@ def draw_server_list():
     card_h = 68
     for i, srv in enumerate(state.servers):
         rect = pygame.Rect(panel.x + 14, y, panel.width - 28, card_h)
-        selected = (state.selected == i and state.status in ("connecting", "analyzing", "feedback"))
-        border = NEON_YELLOW if selected else STATUS_COLORS.get(
-            "secured" if srv["state"] == "secured" else ("compromised" if srv["attempts"] > 0 and srv["state"] != "secured" else "pendente"),
-            TEXT_DIM)
+        selected = (state.selected == i and state.status in ("connecting", "analyzing", "feedback", "restart_prompt"))
+        status_key = server_status_key(srv)
+        border = NEON_YELLOW if selected else STATUS_COLORS.get(status_key, TEXT_DIM)
         neon_panel(rect, border, bg_color=(16, 18, 26), width=2, radius=8)
 
-        dot_color = NEON_GREEN if srv["state"] == "secured" else (NEON_RED if srv["attempts"] > 0 else TEXT_DIM)
+        dot_color = STATUS_COLORS.get(status_key, TEXT_DIM)
         pygame.draw.circle(screen, dot_color, (rect.x + 16, rect.y + 18), 6)
 
         draw_text(screen, srv["id"], font_small, NEON_CYAN, rect.x + 30, rect.y + 8)
         label_lines = wrap_text(srv["label"], font_small, rect.width - 42)
         draw_text(screen, label_lines[0] if label_lines else "", font_small, TEXT_MAIN, rect.x + 30, rect.y + 26)
 
-        status_key = "secured" if srv["state"] == "secured" else ("compromised" if srv["attempts"] > 0 else "pendente")
         draw_text(screen, STATUS_LABELS[status_key], font_small, STATUS_COLORS[status_key],
                   rect.x + 30, rect.bottom - 18)
 
@@ -649,6 +650,27 @@ def draw_terminal_feedback(panel):
               font_small, TEXT_DIM, panel.x + 20, panel.bottom - 30)
 
 
+def draw_terminal_restart(panel):
+    srv = state.servers[state.selected]
+    draw_text(screen, f"TERMINAL DE AUDITORIA -- {srv['id']}", font_h2, NEON_CYAN, panel.x + 20, panel.y + 16)
+    pygame.draw.line(screen, GRID_LINE, (panel.x + 20, panel.y + 46), (panel.right - 20, panel.y + 46), 1)
+
+    draw_text(screen, "AMEACA CLASSIFICADA -- CONCLUA A NEUTRALIZACAO", font_body, NEON_GREEN,
+              panel.x + 20, panel.y + 66)
+    for i, line in enumerate(wrap_text(
+            "Digite o comando de reinicio do servidor encontrado no log capturado e pressione ENTER.",
+            font_body, panel.width - 44)):
+        draw_text(screen, line, font_body, TEXT_MAIN, panel.x + 22, panel.y + 96 + i * 24)
+
+    box = pygame.Rect(panel.x + 20, panel.y + 160, panel.width - 40, 40)
+    neon_panel(box, NEON_CYAN, bg_color=(16, 18, 26), width=2, radius=6)
+    cursor = "_" if int(pygame.time.get_ticks() / 400) % 2 == 0 else ""
+    draw_text(screen, f"> {state.command_input}{cursor}", font_code, NEON_GREEN, box.x + 12, box.y + 11)
+
+    if state.command_error:
+        draw_text(screen, state.command_error, font_small, NEON_RED, panel.x + 20, box.bottom + 16)
+
+
 def draw_hub_or_playing():
     draw_background()
     if state.glitch_timer > 0:
@@ -669,6 +691,8 @@ def draw_hub_or_playing():
         draw_terminal_analyzing(panel)
     elif state.status == "feedback":
         draw_terminal_feedback(panel)
+    elif state.status == "restart_prompt":
+        draw_terminal_restart(panel)
 
     draw_hud()
     draw_text(screen, "ESC para sair", font_small, TEXT_DIM, WIDTH // 2, HEIGHT - 14, center=True)
@@ -742,6 +766,13 @@ def main():
                     state.status = "hub"
                 elif event.key == pygame.K_r and state.status in ("gameover", "victory"):
                     state.reset()
+                elif state.status == "restart_prompt":
+                    if event.key == pygame.K_RETURN:
+                        state.submit_restart_command()
+                    elif event.key == pygame.K_BACKSPACE:
+                        state.command_input = state.command_input[:-1]
+                    elif event.unicode and event.unicode.isprintable() and len(state.command_input) < 48:
+                        state.command_input += event.unicode
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if state.status == "hub":
                     panel = pygame.Rect(20, 128, 330, HEIGHT - 160)
@@ -764,7 +795,7 @@ def main():
 
         if state.status == "boot":
             draw_boot()
-        elif state.status in ("hub", "connecting", "analyzing", "feedback"):
+        elif state.status in ("hub", "connecting", "analyzing", "feedback", "restart_prompt"):
             draw_hub_or_playing()
         elif state.status in ("gameover", "victory"):
             draw_end_screen()
