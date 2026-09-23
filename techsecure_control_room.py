@@ -16,10 +16,10 @@ LAYOUT:
     capturado no servidor selecionado, com pistas sobre o tipo de
     gatilho (Bomba Logica x Bomba Relogio), revelado com efeito de
     maquina de escrever.
-  - Apos um diagnostico correto, o analista precisa digitar o comando
-    de reinicio do servidor para concluir a neutralizacao. O comando
-    esta escondido no proprio log/codigo capturado, junto de outras
-    linhas de auditoria -- exige leitura atenta, nao e destacado.
+  - Apos um diagnostico correto, o analista precisa concluir um mini-jogo
+    de reinicio: guiar o pacote "SAVE" por uma trilha de circuito impresso
+    (estilo placa de PCB) ate o ponto de destino, desviando dos nos de
+    risco (vermelhos), contra um cronometro proprio do hack.
 
 IMPORTANTE: todo o conteudo (logs, codigo) e ficticio e ilustrativo,
 criado apenas para fins didaticos. Nao ha codigo malicioso real nem
@@ -27,8 +27,8 @@ tecnicas de invasao.
 
 Controles:
   - Mouse: selecionar servidor / clicar em BOMBA LOGICA ou BOMBA RELOGIO
-  - Teclado: apos diagnostico correto, digitar o comando de reinicio
-    encontrado no log e pressionar ENTER (BACKSPACE apaga)
+  - Setas do teclado: apos diagnostico correto, guiar o pacote pela
+    trilha do circuito ate o ponto SAVE, evitando os nos vermelhos
   - ESPACO: avancar a sequencia de inicializacao / tela final -> reinicio
   - R: reiniciar apos a tela final
   - ESC: sair
@@ -53,6 +53,13 @@ WRONG_PENALTY = 15
 CONNECT_TIME = 1.1           # duracao da animacao de "conectando..."
 FEEDBACK_HOLD = 3.2           # segundos mostrando o resultado do diagnostico
 
+MAZE_COLS = 8
+MAZE_ROWS = 5
+MAZE_HAZARDS = 3
+MAZE_TIME = 22.0              # cronometro proprio do hack de reinicio
+MAZE_HAZARD_PENALTY = 8
+MAZE_TIMEOUT_PENALTY = 12
+
 BG = (5, 7, 11)
 PANEL_BG = (13, 17, 26)
 TERMINAL_BG = (9, 12, 18)
@@ -69,6 +76,7 @@ TEXT_DIM = (100, 140, 140)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("TechSecure S.A. - Sala de Controle de Incidentes")
 clock = pygame.time.Clock()
+pygame.key.set_repeat(220, 90)
 
 font_logo = pygame.font.SysFont("consolas", 30, bold=True)
 font_title = pygame.font.SysFont("consolas", 34, bold=True)
@@ -179,7 +187,6 @@ SERVERS = [
         "id": "SRV-RH01",
         "label": "Banco de Dados de RH",
         "type": "LOGICA",
-        "restart_cmd": "restart-db rh01",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-RH01",
             "[AUDITORIA] Extraindo trigger suspeito da tabela 'funcionarios'...",
@@ -190,9 +197,6 @@ SERVERS = [
             "    EXECUTE limpar_registros_criticos(NEW.id_funcionario);",
             "    EXECUTE revogar_credenciais_admin();",
             "END IF;",
-            "",
-            "# historico do NOC (ultimo comando executado no host):",
-            "#   $ restart-db rh01",
             "",
             "[NOTA DO SISTEMA] A data de manutencao acima e apenas um",
             "                  registro de log, nao faz parte da condicao",
@@ -211,7 +215,6 @@ SERVERS = [
         "id": "SRV-FIN02",
         "label": "Financeiro / Agendador Cron",
         "type": "RELOGIO",
-        "restart_cmd": "systemctl restart fin02",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-FIN02",
             "[AUDITORIA] Lendo tarefas agendadas em /etc/cron.d/...",
@@ -221,8 +224,6 @@ SERVERS = [
             "0 3 15 6 * root /opt/scripts/cleanup_all.sh --force",
             "",
             "# cleanup_all.sh executa: rm -rf /data/financeiro/* sem confirmacao",
-            "",
-            "# bash_history (root@fin02): systemctl restart fin02",
             "",
             "[NOTA DO SISTEMA] A checagem de espaco em disco e uma rotina",
             "                  padrao do cron, nao uma condicao de negocio.",
@@ -240,7 +241,6 @@ SERVERS = [
         "id": "SRV-PROD03",
         "label": "Producao (Monitoramento)",
         "type": "LOGICA",
-        "restart_cmd": "reboot-watchdog prod03",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-PROD03",
             "[AUDITORIA] Analisando processo watchdog em segundo plano...",
@@ -249,8 +249,6 @@ SERVERS = [
             "a_cada_24h:",
             "    if dias_desde_ultimo_checkin('analista_producao') > 15:",
             "        liberar_payload_destrutivo()",
-            "",
-            "# ultimo comando de manutencao registrado: reboot-watchdog prod03",
             "",
             "[NOTA DO SISTEMA] O watchdog SEMPRE roda a cada 24h -- isso e",
             "                  so a frequencia de verificacao. A condicao",
@@ -268,7 +266,6 @@ SERVERS = [
         "id": "SRV-LIC04",
         "label": "Licenciamento e Integridade",
         "type": "LOGICA",
-        "restart_cmd": "reload-license lic04",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-LIC04",
             "[AUDITORIA] Verificando modulo de licenciamento...",
@@ -278,8 +275,6 @@ SERVERS = [
             "    hash_atual = calcular_hash(binario_core)",
             "    if hash_atual != HASH_ESPERADO:",
             "        travar_producao()",
-            "",
-            "# comando registrado apos o ultimo patch: reload-license lic04",
             "",
             "[NOTA DO SISTEMA] As datas de emissao/validade sao apenas",
             "                  informativas. A funcao so age se o HASH",
@@ -297,7 +292,6 @@ SERVERS = [
         "id": "SRV-NTP05",
         "label": "Sincronizacao de Horario (NTP)",
         "type": "RELOGIO",
-        "restart_cmd": "resync-ntp ntp05",
         "log": [
             "[AUDITORIA] Conexao estabelecida com SRV-NTP05",
             "[AUDITORIA] Inspecionando processo de sincronizacao...",
@@ -307,8 +301,6 @@ SERVERS = [
             "    if system_clock.now() >= datetime(2026, 12, 31, 23, 59):",
             "        corromper_backup_incremental()",
             "    sleep(3600)",
-            "",
-            "# ultimo comando enviado pelo NOC ao host: resync-ntp ntp05",
             "",
             "[NOTA DO SISTEMA] O comentario sobre o usuario 'admin' e so",
             "                  informacao de sessao, nao faz parte da",
@@ -340,6 +332,79 @@ BOOT_LINES = [
 
 
 # ---------------------------------------------------------------------------
+# Mini-jogo de reinicio -- trilha de circuito (estilo hack do Fleeca, GTA V)
+# ---------------------------------------------------------------------------
+MAZE_DIRS = {"N": (0, -1), "S": (0, 1), "E": (1, 0), "W": (-1, 0)}
+MAZE_OPPOSITE = {"N": "S", "S": "N", "E": "W", "W": "E"}
+
+
+def generate_maze(cols, rows):
+    walls = [[{"N": True, "S": True, "E": True, "W": True} for _ in range(rows)] for _ in range(cols)]
+    visited = [[False] * rows for _ in range(cols)]
+    start_stack = [(0, 0)]
+    visited[0][0] = True
+    while start_stack:
+        cx, cy = start_stack[-1]
+        options = []
+        for d, (dx, dy) in MAZE_DIRS.items():
+            nx, ny = cx + dx, cy + dy
+            if 0 <= nx < cols and 0 <= ny < rows and not visited[nx][ny]:
+                options.append((d, nx, ny))
+        if options:
+            d, nx, ny = random.choice(options)
+            walls[cx][cy][d] = False
+            walls[nx][ny][MAZE_OPPOSITE[d]] = False
+            visited[nx][ny] = True
+            start_stack.append((nx, ny))
+        else:
+            start_stack.pop()
+    return walls
+
+
+def maze_dead_ends(walls, cols, rows, exclude):
+    ends = []
+    for x in range(cols):
+        for y in range(rows):
+            if (x, y) in exclude:
+                continue
+            open_dirs = sum(1 for d in MAZE_DIRS if not walls[x][y][d])
+            if open_dirs == 1:
+                ends.append((x, y))
+    return ends
+
+
+class MazeHack:
+    def __init__(self, cols=MAZE_COLS, rows=MAZE_ROWS, hazards=MAZE_HAZARDS):
+        self.cols = cols
+        self.rows = rows
+        self.walls = generate_maze(cols, rows)
+        self.start = (0, rows - 1)
+        self.end = (cols - 1, 0)
+        candidates = maze_dead_ends(self.walls, cols, rows, {self.start, self.end})
+        random.shuffle(candidates)
+        self.hazards = set(candidates[:hazards])
+        self.pos = self.start
+        self.trail = [self.start]
+        self.time_left = MAZE_TIME
+
+    def move(self, direction):
+        dx, dy = MAZE_DIRS[direction]
+        cx, cy = self.pos
+        if self.walls[cx][cy][direction]:
+            return "blocked"
+        nx, ny = cx + dx, cy + dy
+        self.pos = (nx, ny)
+        if self.pos in self.hazards:
+            self.pos = self.start
+            self.trail = [self.start]
+            return "hazard"
+        self.trail.append(self.pos)
+        if self.pos == self.end:
+            return "done"
+        return "moved"
+
+
+# ---------------------------------------------------------------------------
 # Estado do jogo
 # ---------------------------------------------------------------------------
 class GameState:
@@ -361,8 +426,9 @@ class GameState:
         self.feedback_timer = 0.0
         self.mistakes = 0
         self.glitch_timer = 0.0
-        self.command_input = ""
-        self.command_error = ""
+        self.maze = None
+        self.maze_message = ""
+        self.maze_message_timer = 0.0
 
     def secured_count(self):
         return sum(1 for s in self.servers if s["state"] == "secured")
@@ -392,21 +458,25 @@ class GameState:
         self.status = "feedback"
         self.feedback_timer = FEEDBACK_HOLD
 
-    def submit_restart_command(self):
-        if self.status != "restart_prompt" or self.selected is None:
+    def start_maze(self):
+        self.maze = MazeHack()
+        self.maze_message = ""
+        self.maze_message_timer = 0.0
+
+    def maze_move(self, direction):
+        if self.status != "restart_prompt" or self.maze is None:
             return
-        srv = self.servers[self.selected]
-        typed = self.command_input.strip().lower()
-        expected = srv["restart_cmd"].strip().lower()
-        if typed == expected:
-            srv["state"] = "secured"
-            self.command_input = ""
-            self.command_error = ""
-            self.back_to_hub_or_end()
-        else:
-            self.command_error = "Comando incorreto. Revise o log capturado e tente novamente."
-            self.command_input = ""
+        result = self.maze.move(direction)
+        if result == "hazard":
+            self.integrity -= MAZE_HAZARD_PENALTY
+            self.maze_message = "NO DE RISCO ATINGIDO -- pacote reenviado ao inicio."
+            self.maze_message_timer = 2.0
             self.glitch_timer = 0.3
+        elif result == "done":
+            srv = self.servers[self.selected]
+            srv["state"] = "secured"
+            self.maze = None
+            self.back_to_hub_or_end()
 
     def back_to_hub_or_end(self):
         if self.integrity <= 0:
@@ -450,10 +520,21 @@ class GameState:
                 if self.feedback_timer <= 0:
                     if self.last_correct:
                         self.status = "restart_prompt"
-                        self.command_input = ""
-                        self.command_error = ""
+                        self.start_maze()
                     else:
                         self.back_to_hub_or_end()
+            elif self.status == "restart_prompt":
+                if self.maze_message_timer > 0:
+                    self.maze_message_timer -= dt
+                    if self.maze_message_timer <= 0:
+                        self.maze_message = ""
+                self.maze.time_left -= dt
+                if self.maze.time_left <= 0:
+                    self.integrity -= MAZE_TIMEOUT_PENALTY
+                    self.mistakes += 1
+                    self.glitch_timer = 0.5
+                    self.maze = None
+                    self.back_to_hub_or_end()
 
 
 state = GameState()
@@ -652,23 +733,70 @@ def draw_terminal_feedback(panel):
 
 def draw_terminal_restart(panel):
     srv = state.servers[state.selected]
+    maze = state.maze
     draw_text(screen, f"TERMINAL DE AUDITORIA -- {srv['id']}", font_h2, NEON_CYAN, panel.x + 20, panel.y + 16)
     pygame.draw.line(screen, GRID_LINE, (panel.x + 20, panel.y + 46), (panel.right - 20, panel.y + 46), 1)
 
-    draw_text(screen, "AMEACA CLASSIFICADA -- CONCLUA A NEUTRALIZACAO", font_body, NEON_GREEN,
-              panel.x + 20, panel.y + 66)
-    for i, line in enumerate(wrap_text(
-            "Digite o comando de reinicio do servidor encontrado no log capturado e pressione ENTER.",
-            font_body, panel.width - 44)):
-        draw_text(screen, line, font_body, TEXT_MAIN, panel.x + 22, panel.y + 96 + i * 24)
+    draw_text(screen, "AMEACA CLASSIFICADA -- REINICIE O SERVIDOR", font_body, NEON_GREEN,
+              panel.x + 20, panel.y + 62)
+    draw_text(screen, "Use as SETAS para levar o pacote SAVE ate o destino, evitando os nos vermelhos.",
+              font_small, TEXT_MAIN, panel.x + 20, panel.y + 88)
 
-    box = pygame.Rect(panel.x + 20, panel.y + 160, panel.width - 40, 40)
-    neon_panel(box, NEON_CYAN, bg_color=(16, 18, 26), width=2, radius=6)
-    cursor = "_" if int(pygame.time.get_ticks() / 400) % 2 == 0 else ""
-    draw_text(screen, f"> {state.command_input}{cursor}", font_code, NEON_GREEN, box.x + 12, box.y + 11)
+    danger = maze.time_left < 6
+    tcolor = NEON_RED if danger else NEON_YELLOW
+    draw_text(screen, f"TEMPO DO HACK: {max(0, maze.time_left):.1f}s", font_body, tcolor,
+              panel.right - 220, panel.y + 62)
 
-    if state.command_error:
-        draw_text(screen, state.command_error, font_small, NEON_RED, panel.x + 20, box.bottom + 16)
+    if state.maze_message:
+        draw_text(screen, state.maze_message, font_small, NEON_RED, panel.x + 20, panel.y + 110)
+
+    grid_top = panel.y + 132
+    grid_area = pygame.Rect(panel.x + 20, grid_top, panel.width - 40, panel.bottom - grid_top - 16)
+    cell = min(grid_area.width // maze.cols, grid_area.height // maze.rows)
+    maze_w, maze_h = cell * maze.cols, cell * maze.rows
+    ox = grid_area.x + (grid_area.width - maze_w) // 2
+    oy = grid_area.y + (grid_area.height - maze_h) // 2
+
+    def center(cx, cy):
+        return (ox + cx * cell + cell // 2, oy + cy * cell + cell // 2)
+
+    for dx in range(maze.cols + 1):
+        x = ox + dx * cell
+        pygame.draw.line(screen, GRID_LINE, (x, oy), (x, oy + maze_h), 1)
+    for dy in range(maze.rows + 1):
+        y = oy + dy * cell
+        pygame.draw.line(screen, GRID_LINE, (ox, y), (ox + maze_w, y), 1)
+
+    trace_color = (30, 110, 90)
+    for cx in range(maze.cols):
+        for cy in range(maze.rows):
+            if not maze.walls[cx][cy]["E"] and cx + 1 < maze.cols:
+                pygame.draw.line(screen, trace_color, center(cx, cy), center(cx + 1, cy), 5)
+            if not maze.walls[cx][cy]["S"] and cy + 1 < maze.rows:
+                pygame.draw.line(screen, trace_color, center(cx, cy), center(cx, cy + 1), 5)
+
+    for i in range(len(maze.trail) - 1):
+        pygame.draw.line(screen, NEON_CYAN, center(*maze.trail[i]), center(*maze.trail[i + 1]), 7)
+
+    for hx, hy in maze.hazards:
+        hc = center(hx, hy)
+        pulse = 4 + int(2 * math.sin(pygame.time.get_ticks() / 150))
+        pygame.draw.circle(screen, NEON_RED, hc, cell // 5 + pulse, width=0)
+        pygame.draw.circle(screen, BG, hc, cell // 6, width=0)
+
+    end_rect = pygame.Rect(0, 0, cell - 10, cell // 2)
+    end_rect.center = center(*maze.end)
+    neon_panel(end_rect, NEON_PINK, bg_color=(40, 14, 30), width=2, radius=4)
+    draw_text(screen, "SAVE", font_small, NEON_PINK, end_rect.centerx, end_rect.centery, center=True)
+
+    start_rect = pygame.Rect(0, 0, cell - 10, cell // 2)
+    start_rect.center = center(*maze.start)
+    neon_panel(start_rect, TEXT_DIM, bg_color=(20, 24, 30), width=1, radius=4)
+
+    player_c = center(*maze.pos)
+    pulse = 3 + int(2 * math.sin(pygame.time.get_ticks() / 120))
+    pygame.draw.circle(screen, NEON_YELLOW, player_c, cell // 4 + pulse)
+    pygame.draw.circle(screen, BG, player_c, cell // 6)
 
 
 def draw_hub_or_playing():
@@ -767,12 +895,14 @@ def main():
                 elif event.key == pygame.K_r and state.status in ("gameover", "victory"):
                     state.reset()
                 elif state.status == "restart_prompt":
-                    if event.key == pygame.K_RETURN:
-                        state.submit_restart_command()
-                    elif event.key == pygame.K_BACKSPACE:
-                        state.command_input = state.command_input[:-1]
-                    elif event.unicode and event.unicode.isprintable() and len(state.command_input) < 48:
-                        state.command_input += event.unicode
+                    if event.key in (pygame.K_UP, pygame.K_w):
+                        state.maze_move("N")
+                    elif event.key in (pygame.K_DOWN, pygame.K_s):
+                        state.maze_move("S")
+                    elif event.key in (pygame.K_LEFT, pygame.K_a):
+                        state.maze_move("W")
+                    elif event.key in (pygame.K_RIGHT, pygame.K_d):
+                        state.maze_move("E")
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if state.status == "hub":
                     panel = pygame.Rect(20, 128, 330, HEIGHT - 160)
