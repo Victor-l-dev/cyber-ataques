@@ -137,6 +137,7 @@
   ul.defense li{font-size:17px; color:var(--ink-dim); padding:13px 0 13px 24px; border-top:1px solid var(--line); position:relative;}
   ul.defense li:first-child{border-top:none;}
   ul.defense li::before{content:"→"; position:absolute; left:0; top:12px; color:var(--purple); font-weight:600;}
+  section#tb-funcionamento ul.defense li::before,
   section#tb-defesa ul.defense li::before{color:var(--blue);}
 
   table{width:100%; border-collapse:collapse; margin-top:22px; font-size:15.5px;}
@@ -216,7 +217,6 @@
     <p class="navgroup-label"><span class="sq" style="background:var(--ink-dim);"></span>SÍNTESE</p>
     <nav class="links">
       <a href="#comparacao" data-section="comparacao">Comparação Direta</a>
-      <a href="#neutralizacao" data-section="neutralizacao">Análise Visual &amp; Neutralização</a>
       <a href="#desafio" data-section="desafio">Conclusão &amp; Desafio</a>
       <a href="#referencias" data-section="referencias">Referências</a>
     </nav>
@@ -328,11 +328,10 @@
     <div class="col-text">
       <p class="kicker tb">Time Bomb · Conceito e Histórico</p>
       <h2>Time Bomb <span style="color:var(--ink-dim); font-weight:400; font-size:23px;">(Bomba Relógio)</span></h2>
-      <p><strong>Definição oficial:</strong> subcategoria de bomba lógica cujo gatilho é estritamente baseado no fator tempo.</p>
+      <p><strong>Definição oficial (NIST, para bomba lógica):</strong> <em>Trecho de código inserido intencionalmente em um sistema de software que dispara uma função maliciosa quando condições específicas são atendidas.</em></p>
+      <p><strong>Em palavras simples:</strong> subcategoria de bomba lógica cujo gatilho é baseado principalmente no fator tempo.</p>
       <h3>Histórico e evolução</h3>
-      <p>Evoluiu de antigos vírus que aguardavam datas específicas — como o WM/Theatre.A, programado para o dia 1º do mês — até rotinas agendadas em scripts de administração de rede.</p>
-      <h3>Diferencial técnico</h3>
-      <p>Utiliza o relógio do sistema (<em>System Clock</em>), contadores de tempo decorrido ou utilitários de agendamento de tarefas para disparar o payload.</p>
+      <p>Vai desde antigos vírus que aguardavam datas específicas até o uso de tarefas automáticas de administração.</p>
     </div>
     <div class="col-art">
       <img src="assets/time-bomb-clock.svg" alt="Ilustração animada de um relógio com contagem regressiva e detonação temporal da Time Bomb" style="width:100%; max-width:320px; height:auto;">
@@ -344,9 +343,12 @@
       <p class="kicker tb">Time Bomb · Funcionamento, Caso e Defesa</p>
       <h2>Como ela executa</h2>
       <h3>Mecanismo de execução</h3>
-      <p>Avaliação condicional de data/hora fixa, contagem regressiva de segundos, ou agendamento via Cron (Linux) / Task Scheduler (Windows).</p>
-      <h3>Impacto no sistema</h3>
-      <p>Ativação programada em momento de baixa vigilância — finais de semana ou madrugadas — para maximizar o impacto antes do início da resposta a incidentes.</p>
+      <p>O gatilho temporal pode funcionar de três formas:</p>
+      <ul class="defense">
+        <li><strong>Data e hora fixas:</strong> o payload roda quando o relógio do sistema alcança a data gravada no código. É a forma mais simples e a mais fácil de contornar, pois alterar a hora do computador pode impedir o disparo.</li>
+        <li><strong>Contagem regressiva:</strong> o código usa um contador próprio (por exemplo, 60 dias após a primeira execução) e não depende do relógio do sistema. Alterar a data não adianta, e por isso é mais difícil de desarmar.</li>
+        <li><strong>Relógio externo e agendadores de tarefas:</strong> o malware pode consultar uma fonte externa de hora (NTP ou cabeçalho HTTP) para ignorar um relógio local adulterado, como em um sandbox de análise. O disparo também pode ser delegado ao Cron (Linux) ou ao Task Scheduler (Windows).</li>
+      </ul>
     </div>
     <div class="col-art">
       <svg viewBox="0 0 320 320" fill="none">
@@ -444,38 +446,12 @@
     </div>
   </section>
 
-  <section id="neutralizacao">
-    <div class="col-text">
-      <p class="kicker shared">Análise Visual e Processo de Neutralização</p>
-      <h2>Do gatilho à contenção</h2>
-      <div class="flow">[Gatilho (Estado/Data)] &rarr; [Validação Booleana] &rarr; [Execução do Payload Destrutivo]</div>
-      <h3>Processo de difusão (baseado em metodologia SANS)</h3>
-      <ol class="diffuse">
-        <li><strong>Isolar</strong> o host da rede.</li>
-        <li><strong>Preservar evidências forenses</strong> antes de alterar o estado do sistema.</li>
-        <li><strong>Restaurar</strong> o ambiente em laboratório isolado.</li>
-        <li><strong>Validar</strong> que o backup não contém o gatilho nem o código dormente.</li>
-        <li><strong>Testar</strong> manipulando o relógio do sistema e analisando chamadas de sistema (<em>diffusing</em>).</li>
-        <li><strong>Restaurar</strong> o serviço de forma monitorada.</li>
-      </ol>
-    </div>
-    <div class="col-art">
-      <svg viewBox="0 0 320 320" fill="none">
-        <circle cx="90" cy="160" r="34" stroke="#6d28d9" stroke-width="1.8"/>
-        <path d="M124 160 H176" stroke="#5d5c74" stroke-width="1.6" stroke-dasharray="4 5"/>
-        <circle cx="210" cy="160" r="34" stroke="#1d4ed8" stroke-width="1.8"/>
-        <path d="M78 148 L102 172 M102 148 L78 172" stroke="#6d28d9" stroke-width="2"/>
-        <path d="M198 148 L210 160 L222 148 M198 172 L210 160" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="160" cy="160" r="3" fill="#5d5c74"/>
-      </svg>
-    </div>
-  </section>
-
   <section id="desafio">
     <div class="col-text">
       <p class="kicker shared">Conclusão + Desafio do Analista</p>
       <h2>Conclusão</h2>
-      <p>Ameaças com gatilhos exigem uma estratégia de defesa em profundidade que vá além da detecção de assinaturas de malware — focando na integridade de arquivos, gestão de acessos e rigor com ex-colaboradores.</p>
+      <p>Bomba lógica e time bomb têm a mesma estrutura, gatilho e payload, e se diferenciam pelo que o gatilho verifica: uma mudança de estado ou o tempo. Alguns casos mostram um padrão: um profissional com acesso privilegiado, que inseriu o código antes de sair da empresa e deixou o disparo para depois. Como o código é feito sob medida, a detecção por assinatura não basta, e não há como evitar essas bombas por completo, apenas dificultá-las.</p>
+      <p>Para uma organização, isso significa combinar menor privilégio, verificação de integridade de arquivos, auditoria de agendadores de tarefas e um processo rigoroso de desligamento de colaboradores.</p>
       <div class="challenge">
         <p class="kicker shared" style="margin-bottom:6px;">Desafio do Analista</p>
         <p>Na TechSecure S.A., após a demissão de um engenheiro, os servidores de banco de dados pararam de responder exatamente às 02h00 do domingo seguinte, sem nenhuma alteração nos registros de usuários no dia. Qual foi a ameaça responsável?</p>
