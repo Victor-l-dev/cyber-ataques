@@ -1,0 +1,7 @@
+# Scripts shell devem sempre usar fim de linha LF (evita "no such file or directory" no Docker/Linux)
+*.sh text eol=lf
+
+# Outros arquivos que rodam em containers Linux
+Dockerfile text eol=lf
+docker-compose.yml text eol=lf
+requirements.txt text eol=lf

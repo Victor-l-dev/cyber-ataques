@@ -47,7 +47,7 @@ pygame.init()
 WIDTH, HEIGHT = 1150, 760
 FPS = 60
 
-GLOBAL_TIME = 150.0           # tempo total reduzido -- mais dificil
+GLOBAL_TIME = 165.0           # tempo total -- +15s para resolver os servidores
 INTEGRITY_START = 100
 WRONG_PENALTY = 15
 CONNECT_TIME = 1.1           # duracao da animacao de "conectando..."
@@ -83,7 +83,8 @@ font_title = pygame.font.SysFont("consolas", 34, bold=True)
 font_h2 = pygame.font.SysFont("consolas", 21, bold=True)
 font_body = pygame.font.SysFont("consolas", 17)
 font_small = pygame.font.SysFont("consolas", 14)
-font_code = pygame.font.SysFont("consolas", 16)
+font_code = pygame.font.SysFont("consolas", 19)
+font_note = pygame.font.SysFont("consolas", 21)
 font_clock = pygame.font.SysFont("consolas", 40, bold=True)
 font_mono_rain = pygame.font.SysFont("consolas", 16)
 
@@ -547,14 +548,14 @@ def draw_hud():
     danger_time = state.time_left < 30
     danger_integrity = state.integrity < 30
 
-    hud_rect = pygame.Rect(0, 0, WIDTH, 108)
+    hud_rect = pygame.Rect(0, 0, WIDTH, 120)
     pygame.draw.rect(screen, (9, 11, 17), hud_rect)
-    pygame.draw.line(screen, NEON_CYAN, (0, 108), (WIDTH, 108), 2)
+    pygame.draw.line(screen, NEON_CYAN, (0, 120), (WIDTH, 120), 2)
 
     draw_text(screen, "TECHSECURE S.A. -- SALA DE CONTROLE DE INCIDENTES",
               font_logo, NEON_CYAN, 24, 14)
-    draw_text(screen, f"Servidores neutralizados: {state.secured_count()}/{len(state.servers)}   |   Falhas: {state.mistakes}",
-              font_small, TEXT_DIM, 24, 50)
+    draw_text(screen, f"Ameacas neutralizadas: {state.secured_count()}/{len(state.servers)}   |   Falhas: {state.mistakes}",
+              font_body, NEON_CYAN, 24, 48)
 
     # Cronometro
     mins = int(state.time_left) // 60
@@ -566,7 +567,7 @@ def draw_hud():
     draw_text(screen, f"{mins:02d}:{secs:02d}", font_clock, tcolor, WIDTH - 260, 40)
 
     # Barra de integridade
-    bar_x, bar_y, bar_w, bar_h = 24, 76, WIDTH - 320, 22
+    bar_x, bar_y, bar_w, bar_h = 24, 90, WIDTH - 320, 22
     draw_text(screen, "INTEGRIDADE DA REDE CORPORATIVA", font_small, TEXT_DIM, bar_x, bar_y - 16)
     pygame.draw.rect(screen, (25, 25, 25), (bar_x, bar_y, bar_w, bar_h), border_radius=6)
     ratio = max(0, state.integrity) / INTEGRITY_START
@@ -592,7 +593,7 @@ STATUS_COLORS = {
 STATUS_LABELS = {
     "pendente": "NAO ANALISADO",
     "diagnosed": "AGUARDANDO COMANDO",
-    "secured": "NEUTRALIZADO",
+    "secured": "AMEACA NEUTRALIZADA",
     "compromised": "TENTATIVA FALHOU",
 }
 
@@ -653,10 +654,10 @@ def diagnosis_button_rects(panel):
 def draw_terminal_idle(panel):
     draw_text(screen, "TERMINAL DE AUDITORIA", font_h2, NEON_CYAN, panel.x + 20, panel.y + 16)
     pygame.draw.line(screen, GRID_LINE, (panel.x + 20, panel.y + 46), (panel.right - 20, panel.y + 46), 1)
-    draw_text(screen, "Selecione um servidor na lista a esquerda para iniciar a", font_body, TEXT_DIM,
+    draw_text(screen, "Selecione um servidor na lista a esquerda para iniciar a", font_h2, NEON_GREEN,
               panel.x + 20, panel.y + 80)
-    draw_text(screen, "captura e analise do log de auditoria.", font_body, TEXT_DIM,
-              panel.x + 20, panel.y + 104)
+    draw_text(screen, "captura e analise do log de auditoria.", font_h2, NEON_GREEN,
+              panel.x + 20, panel.y + 112)
     if int(pygame.time.get_ticks() / 500) % 2 == 0:
         draw_text(screen, "_", font_body, NEON_GREEN, panel.x + 20, panel.y + 140)
 
@@ -686,19 +687,29 @@ def draw_terminal_analyzing(panel):
     lines = visible.split("\n")
 
     y = panel.y + 58
+    in_note = False
     for line in lines:
-        if line.startswith("[PISTA]") or line.startswith("        "):
-            color = NEON_YELLOW
+        # A partir de "[NOTA DO SISTEMA]" tudo faz parte da nota:
+        # cor unica e fonte um pouco maior para facilitar a leitura.
+        if line.startswith("[NOTA DO SISTEMA]"):
+            in_note = True
+        if in_note:
+            color = TEXT_MAIN
+            font = font_note
         elif line.startswith("[AUDITORIA]"):
             color = NEON_PURPLE
+            font = font_code
         elif line.strip().startswith(("#", "--")):
             color = NEON_CYAN
+            font = font_code
         elif line.strip() == "":
             color = TEXT_DIM
+            font = font_code
         else:
             color = NEON_GREEN
-        draw_text(screen, line, font_code, color, panel.x + 22, y)
-        y += 21
+            font = font_code
+        draw_text(screen, line, font, color, panel.x + 22, y)
+        y += font.get_height() + 4
 
     if not state.log_tw.done() and int(pygame.time.get_ticks() / 300) % 2 == 0:
         draw_text(screen, "_", font_code, NEON_GREEN, panel.x + 22, y)
@@ -848,7 +859,7 @@ def draw_boot():
 def draw_end_screen():
     draw_background()
     victory = state.status == "victory"
-    title = "TODOS OS SERVIDORES NEUTRALIZADOS" if victory else "PROTOCOLO DE EMERGENCIA ACIONADO"
+    title = "TODAS AS AMEACAS NEUTRALIZADAS" if victory else "PROTOCOLO DE EMERGENCIA ACIONADO"
     sub = "A rede corporativa foi protegida a tempo." if victory else (
         "Tempo esgotado ou integridade da rede zerada." if not victory else "")
     color = NEON_GREEN if victory else NEON_RED
@@ -856,7 +867,7 @@ def draw_end_screen():
     draw_text(screen, title, font_title, color, WIDTH // 2, 76, center=True)
     draw_text(screen, sub, font_small, TEXT_DIM, WIDTH // 2, 108, center=True)
 
-    draw_text(screen, f"Servidores neutralizados: {state.secured_count()}/{len(state.servers)}"
+    draw_text(screen, f"Ameacas neutralizadas: {state.secured_count()}/{len(state.servers)}"
                        f"   |   Falhas: {state.mistakes}   |   Integridade final: {max(0, state.integrity)}%",
               font_body, NEON_YELLOW, WIDTH // 2, 138, center=True)
 
@@ -865,7 +876,7 @@ def draw_end_screen():
     draw_text(screen, "RESUMO TECNICO DOS INCIDENTES:", font_body, TEXT_MAIN, panel.x + 20, panel.y + 12)
     y = panel.y + 42
     for srv in state.servers:
-        result = "NEUTRALIZADO" if srv["state"] == "secured" else "NAO RESOLVIDO"
+        result = "AMEACA NEUTRALIZADA" if srv["state"] == "secured" else "NAO RESOLVIDO"
         rcolor = NEON_GREEN if srv["state"] == "secured" else NEON_RED
         tipo = "Bomba Logica" if srv["type"] == "LOGICA" else "Bomba Relogio"
         draw_text(screen, f"{srv['id']} ({srv['label']}) -- {result}  |  Classificacao correta: {tipo}",

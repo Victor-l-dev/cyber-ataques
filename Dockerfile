@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY techsecure_control_room.py .
 COPY start.sh .
-RUN chmod +x start.sh
+RUN sed -i 's/\r$//' start.sh && chmod +x start.sh
 
 COPY novnc-index.html /usr/share/novnc/index.html
 
